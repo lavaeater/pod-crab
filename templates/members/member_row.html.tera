@@ -1,0 +1,7 @@
+<tr class="cursor-pointer" hx-get="/members/{{ member.id }}">
+    <td>{{ member.first_name }}</td>
+    <td>{{ member.last_name }}</td>
+    <td>{{ member.email }}</td>
+    <td>{{ member.mobile_phone }}</td>
+    <td>{{ member.birth_date }}</td>
+</tr>

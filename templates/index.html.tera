@@ -1,0 +1,8 @@
+{% extends "layout.html.tera" %} 
+{% block content %}
+  <div class="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8 py-6" hx-boost="true">
+    <p class="prose">Yo, what up bitches?</p>
+    <a href="/posts" class="link-primary">Posts</a><br />
+    <a href="/members" class="link-primary">Members List</a>
+  </div>
+{% endblock content %}

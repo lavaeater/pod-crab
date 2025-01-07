@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>{% block title %}{% endblock %}</title>
+    <meta name="description" content="Actix - SeaOrm integration example"/>
+    <meta name="author" content="Sam Samai"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <link href="/dist/main.css" rel="stylesheet">
+    <script src="/dist/main.js" defer></script>
+    <link rel="icon" type="image/png" href="/static/images/favicon.png"/>
+</head>
+<body>
+<div class="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8">
+    {% block content %}{% endblock content %}
+</div>
+</body>
+</html>
