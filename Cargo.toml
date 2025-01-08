@@ -7,6 +7,10 @@ edition = "2021"
 [workspace]
 
 [dependencies]
+entity = { path = "entity" }
+api = { path = "api" }
+service = { path = "service" }
+migration = { path = "migration" }
 tokio = { version = "1.41.1", features = ["macros", "rt-multi-thread"] }
 poem = { version = "3.1.6", features = ["static-files","cookie","csrf", "fluent", "fluent-syntax", "i18n", "requestid"] }
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
