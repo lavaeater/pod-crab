@@ -3,18 +3,24 @@
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(table_name = "member")]
+#[sea_orm(table_name = "user")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    pub first_name: String,
-    pub last_name: String,
     pub email: String,
-    pub mobile_phone: String,
-    pub birth_date: Date,
+    pub name: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+pub enum Relation {
+    #[sea_orm(has_many = "super::episode::Entity")]
+    Episode,
+}
+
+impl Related<super::episode::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Episode.def()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}

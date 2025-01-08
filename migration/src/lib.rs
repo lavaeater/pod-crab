@@ -3,7 +3,7 @@ use sea_orm_migration::schema::integer;
 use std::fmt::Display;
 
 mod m20220120_000001_create_post_table;
-mod m20241205_170802_create_members_table;
+mod m20241205_170802_create_member_table;
 mod m20250108_130829_add_episode_and_user_table;
 
 pub struct Migrator;
@@ -13,7 +13,7 @@ impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
             Box::new(m20220120_000001_create_post_table::Migration),
-            Box::new(m20241205_170802_create_members_table::Migration),
+            Box::new(m20241205_170802_create_member_table::Migration),
             Box::new(m20250108_130829_add_episode_and_user_table::Migration),
         ]
     }
