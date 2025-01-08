@@ -1,4 +1,4 @@
-# Rspack Project
+# Pod Crab
 
 ## Setup
 
@@ -10,7 +10,13 @@ npm install
 
 ## Get Started
 
-Start the dev server:
+Start bacon:
+```bash
+cargo install --locked bacon
+bacon run-long
+```
+
+Start the dev server for frontend shite:
 
 ```bash
 npm run dev

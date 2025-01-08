@@ -20,3 +20,6 @@ tokio = { version = "1.41.1", features = ["macros", "rt-multi-thread"] }
 poem = { version = "3.1.6", features = ["static-files","cookie","csrf", "fluent", "fluent-syntax", "i18n", "requestid"] }
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 dotenvy = "0.15.7"
+openidconnect = "4.0.0-rc.1"
+url = "2.5.4"
+env_logger = "0.11.6"
