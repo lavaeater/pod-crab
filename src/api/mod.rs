@@ -28,7 +28,7 @@ struct PaginationParams {
 
 #[tokio::main]
 async fn start() -> std::io::Result<()> {
-    std::env::set_var("RUST_LOG", "debug");
+    env::set_var("RUST_LOG", "debug");
     tracing_subscriber::fmt::init();
 
     // get env vars
