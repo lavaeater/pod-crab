@@ -1,8 +1,4 @@
-mod service;
-mod entity;
-mod api;
-mod migration;
 
 fn main() {
-    api::main();
+    api::main(Some(env!("CARGO_MANIFEST_DIR").to_owned()));
 }

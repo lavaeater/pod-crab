@@ -1,42 +1,45 @@
-use crate::api::{AppState, PaginationParams, DEFAULT_ITEMS_PER_PAGE};
-use crate::entity::post;
-use crate::service::{Mutation as MutationCore, Query as QueryCore};
+use crate::{AppState, PaginationParams, DEFAULT_ITEMS_PER_PAGE};
+use entities::{member, member::Model as Member};
 use poem::error::InternalServerError;
 use poem::http::StatusCode;
 use poem::web::{Data, Form, Html, Path, Query};
 use poem::{get, handler, Error, IntoResponse, Route};
+use service::{Mutation as MutationCore, Query as QueryCore};
 
 #[handler]
-pub async fn create(state: Data<&AppState>, form: Form<post::Model>) -> poem::Result<impl IntoResponse> {
+pub async fn create(state: Data<&AppState>, form: Form<Member>) -> poem::Result<impl IntoResponse> {
     let form = form.0;
     let conn = &state.conn;
 
-    MutationCore::create_post(conn, form)
+    MutationCore::create_member(conn, form)
         .await
         .map_err(InternalServerError)?;
 
-    Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/posts"))
+    Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/members"))
 }
 
 #[handler]
-pub async fn list(state: Data<&AppState>, Query(params): Query<PaginationParams>) -> poem::Result<impl IntoResponse> {
+pub async fn list(
+    state: Data<&AppState>,
+    Query(params): Query<PaginationParams>,
+) -> poem::Result<impl IntoResponse> {
     let conn = &state.conn;
     let page = params.page.unwrap_or(1);
-    let posts_per_page = params.items_per_page.unwrap_or(DEFAULT_ITEMS_PER_PAGE);
+    let members_per_page = params.items_per_page.unwrap_or(DEFAULT_ITEMS_PER_PAGE);
 
-    let (posts, num_pages) = QueryCore::find_posts_in_page(conn, page, posts_per_page)
+    let (members, num_pages) = QueryCore::find_members_in_page(conn, page, members_per_page)
         .await
         .map_err(InternalServerError)?;
 
     let mut ctx = tera::Context::new();
-    ctx.insert("posts", &posts);
+    ctx.insert("members", &members);
     ctx.insert("page", &page);
-    ctx.insert("posts_per_page", &posts_per_page);
+    ctx.insert("members_per_page", &members_per_page);
     ctx.insert("num_pages", &num_pages);
 
     let body = state
         .templates
-        .render("posts/list.html.tera", &ctx)
+        .render("members/list.html.tera", &ctx)
         .map_err(InternalServerError)?;
     Ok(Html(body))
 }
@@ -44,28 +47,30 @@ pub async fn list(state: Data<&AppState>, Query(params): Query<PaginationParams>
 #[handler]
 pub async fn new(state: Data<&AppState>) -> poem::Result<impl IntoResponse> {
     let ctx = tera::Context::new();
-    let body = state
-        .templates
-        .render("posts/new.html.tera", &ctx)
-        .map_err(InternalServerError)?;
-    Ok(Html(body))
+    match state.templates.render("members/new.html.tera", &ctx) {
+        Ok(rendered) => Ok(Html(rendered)),
+        Err(err) => {
+            eprintln!("Tera rendering error: {:?}", err); // Log the error
+            Err(InternalServerError(err))
+        }
+    }
 }
 
 #[handler]
 pub async fn edit(state: Data<&AppState>, Path(id): Path<i32>) -> poem::Result<impl IntoResponse> {
     let conn = &state.conn;
 
-    let post: post::Model = QueryCore::find_post_by_id(conn, id)
+    let member: member::Model = QueryCore::find_member_by_id(conn, id)
         .await
         .map_err(InternalServerError)?
         .ok_or_else(|| Error::from_status(StatusCode::NOT_FOUND))?;
 
     let mut ctx = tera::Context::new();
-    ctx.insert("post", &post);
+    ctx.insert("member", &member);
 
     let body = state
         .templates
-        .render("posts/edit.html.tera", &ctx)
+        .render("members/edit.html.tera", &ctx)
         .map_err(InternalServerError)?;
     Ok(Html(body))
 }
@@ -74,34 +79,37 @@ pub async fn edit(state: Data<&AppState>, Path(id): Path<i32>) -> poem::Result<i
 pub async fn update(
     state: Data<&AppState>,
     Path(id): Path<i32>,
-    form: Form<post::Model>,
+    form: Form<member::Model>,
 ) -> poem::Result<impl IntoResponse> {
     let conn = &state.conn;
     let form = form.0;
 
-    let post = MutationCore::update_post_by_id(conn, id, form)
+    let member = MutationCore::update_member_by_id(conn, id, form)
         .await
         .map_err(InternalServerError)?;
 
     let mut ctx = tera::Context::new();
-    ctx.insert("post", &post);
+    ctx.insert("member", &member);
 
     let body = state
         .templates
-        .render("posts/post_row.html.tera", &ctx)
+        .render("members/member_row.html.tera", &ctx)
         .map_err(InternalServerError)?;
     Ok(Html(body))
 }
 
 #[handler]
-pub async fn destroy(state: Data<&AppState>, Path(id): Path<i32>) -> poem::Result<impl IntoResponse> {
+pub async fn destroy(
+    state: Data<&AppState>,
+    Path(id): Path<i32>,
+) -> poem::Result<impl IntoResponse> {
     let conn = &state.conn;
 
-    MutationCore::delete_post(conn, id)
+    MutationCore::delete_member(conn, id)
         .await
         .map_err(InternalServerError)?;
 
-    Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/posts"))
+    Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/members"))
 }
 
 // A function to define all routes related to posts
@@ -111,4 +119,3 @@ pub fn routes() -> Route {
         .at("/new", get(new))
         .at("/:id", get(edit).patch(update).delete(destroy))
 }
-

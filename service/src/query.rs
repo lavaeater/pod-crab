@@ -1,6 +1,8 @@
 use sea_orm::*;
-use crate::entity::{post, post::Entity as Post};
-use crate::entity::{member, member::Entity as Member};
+use entities::{member, member::Entity as Member};
+use entities::{post, post::Entity as Post};
+
+
 
 pub struct Query;
 

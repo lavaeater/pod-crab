@@ -1,5 +1,6 @@
-use crate::entity::{member, member::Entity as Member};
-use crate::entity::{post, post::Entity as Post};
+use entities::{member, member::Entity as Member};
+use entities::{post, post::Entity as Post};
+
 use sea_orm::*;
 
 pub struct Mutation;

@@ -1,16 +1,15 @@
-pub(crate) mod handlers;
-
 use std::env;
-
-use crate::migration::Migrator;
+use poem::{get, EndpointExt, Route, Server};
 use poem::endpoint::StaticFilesEndpoint;
 use poem::listener::TcpListener;
-use poem::{get, EndpointExt, Route, Server};
 use sea_orm::{Database, DatabaseConnection};
-use sea_orm_migration::MigratorTrait;
 use serde::Deserialize;
 use tera::Tera;
-use crate::api::handlers::*;
+use migration::{Migrator, MigratorTrait};
+use crate::handlers::{index, members, posts};
+
+mod handlers;
+
 
 const DEFAULT_ITEMS_PER_PAGE: u64 = 5;
 
@@ -27,7 +26,8 @@ struct PaginationParams {
 }
 
 #[tokio::main]
-async fn start() -> std::io::Result<()> {
+async fn start(root_path: Option<String>) -> std::io::Result<()> {
+    let root_path = if let Some(root_path) = root_path { root_path } else { env::current_dir()?.to_str().unwrap().to_string() };
     env::set_var("RUST_LOG", "debug");
     tracing_subscriber::fmt::init();
 
@@ -41,7 +41,7 @@ async fn start() -> std::io::Result<()> {
     // create post table if not exists
     let conn = Database::connect(&db_url).await.unwrap();
     Migrator::up(&conn, None).await.unwrap();
-    let templates = Tera::new(concat!(env!("CARGO_MANIFEST_DIR"), "/templates/**/*")).unwrap();
+    let templates = Tera::new(&format!("{}/templates/**/*", &root_path)).unwrap();
     let state = AppState { templates, conn };
 
     println!("Starting server at {server_url}");
@@ -52,19 +52,19 @@ async fn start() -> std::io::Result<()> {
         .nest("/members", members::routes())
         .nest(
             "/static",
-            StaticFilesEndpoint::new(concat!(env!("CARGO_MANIFEST_DIR"), "/static")),
+            StaticFilesEndpoint::new(format!("{}/static", &root_path)),
         )
         .nest(
             "/dist",
-            StaticFilesEndpoint::new(concat!(env!("CARGO_MANIFEST_DIR"), "/dist")),
+            StaticFilesEndpoint::new(format!("{}/dist", &root_path)),
         )
         .data(state);
     let server = Server::new(TcpListener::bind(format!("{host}:{port}")));
     server.run(app).await
 }
 
-pub fn main() {
-    let result = start();
+pub fn main(root_path: Option<String>) {
+    let result = start(root_path);
 
     if let Some(err) = result.err() {
         println!("Error: {err}");
