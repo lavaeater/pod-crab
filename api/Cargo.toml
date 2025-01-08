@@ -1,0 +1,22 @@
+cargo-features = ["codegen-backend"]
+
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "api"
+path = "src/lib.rs"
+
+[dependencies]
+migration = { path = "../migration" }
+entities = { path = "../entities" }
+service = { path = "../service" }
+serde = { version = "1", features = ["derive"] }
+tera = "1.20.0"
+sea-orm = "1.1.2"
+tokio = { version = "1.41.1", features = ["macros", "rt-multi-thread"] }
+poem = { version = "3.1.6", features = ["static-files","cookie","csrf", "fluent", "fluent-syntax", "i18n", "requestid"] }
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+dotenvy = "0.15.7"

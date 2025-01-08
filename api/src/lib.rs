@@ -1,16 +1,15 @@
-pub(crate) mod handlers;
-
 use std::env;
-
-use crate::migration::Migrator;
+use poem::{get, EndpointExt, Route, Server};
 use poem::endpoint::StaticFilesEndpoint;
 use poem::listener::TcpListener;
-use poem::{get, EndpointExt, Route, Server};
 use sea_orm::{Database, DatabaseConnection};
-use sea_orm_migration::MigratorTrait;
 use serde::Deserialize;
 use tera::Tera;
-use crate::api::handlers::*;
+use migration::{Migrator, MigratorTrait};
+use crate::handlers::{index, members, posts};
+
+mod handlers;
+
 
 const DEFAULT_ITEMS_PER_PAGE: u64 = 5;
 
