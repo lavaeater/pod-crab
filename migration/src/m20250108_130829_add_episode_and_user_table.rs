@@ -1,7 +1,7 @@
+use crate::foreign_key_auto;
+use sea_orm_migration::{prelude::*, schema::*};
 use std::fmt;
 use std::fmt::Display;
-use sea_orm_migration::{prelude::*, schema::*};
-use crate::foreign_key_auto;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -23,7 +23,7 @@ impl MigrationTrait for Migration {
 
         manager
             .create_table(foreign_key_auto(
-            &mut Table::create()
+                &mut Table::create()
                     .table(Episode::Table)
                     .if_not_exists()
                     .col(pk_uuid(Episode::Id))
@@ -31,8 +31,12 @@ impl MigrationTrait for Migration {
                     .col(string(Episode::Summary))
                     .col(string(Episode::Tags))
                     .col(string_null(Episode::Url))
-                    .to_owned(),Episode::Table, Episode::UserId, User::Table, User::Id)
-            )
+                    .to_owned(),
+                Episode::Table,
+                Episode::UserId,
+                User::Table,
+                User::Id,
+            ))
             .await?;
         Ok(())
     }
@@ -67,8 +71,8 @@ impl Display for Episode {
             Episode::UserId => write!(f, "episode_user_id"),
             Episode::Title => write!(f, "episode_title"),
             Episode::Summary => write!(f, "episode_summary"),
-                Episode::Tags => write!(f, "episode_tags"),
-            Episode::Url => write!(f, "episode_url")
+            Episode::Tags => write!(f, "episode_tags"),
+            Episode::Url => write!(f, "episode_url"),
         }
     }
 }
@@ -91,4 +95,3 @@ impl Display for User {
         }
     }
 }
-

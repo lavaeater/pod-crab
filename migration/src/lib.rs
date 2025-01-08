@@ -1,11 +1,10 @@
-use std::fmt;
-use std::fmt::Display;
 pub use sea_orm_migration::prelude::*;
 use sea_orm_migration::schema::integer;
+use std::fmt::Display;
 
 mod m20220120_000001_create_post_table;
 mod m20241205_170802_create_members_table;
-mod m20250108_130829_AddEpisodeTable;
+mod m20250108_130829_add_episode_and_user_table;
 
 pub struct Migrator;
 
@@ -15,7 +14,7 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m20220120_000001_create_post_table::Migration),
             Box::new(m20241205_170802_create_members_table::Migration),
-            Box::new(m20250108_130829_AddEpisodeTable::Migration),
+            Box::new(m20250108_130829_add_episode_and_user_table::Migration),
         ]
     }
 }
