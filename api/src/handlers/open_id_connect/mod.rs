@@ -69,7 +69,8 @@ type GoogleProviderMetadata = ProviderMetadata<
     CoreSubjectIdentifierType,
 >;
 
-fn main() {
+pub async fn fjonk_e_bonke() {
+    // get env vars
     env_logger::init();
 
     let google_client_id = ClientId::new(
@@ -105,7 +106,7 @@ fn main() {
     // And then test for the presence of "revocation_endpoint" in the map returned by a call to
     // .additional_metadata().
 
-    let provider_metadata = GoogleProviderMetadata::discover(&issuer_url, &http_client)
+    let provider_metadata = GoogleProviderMetadata::discover_async(issuer_url, &http_client).await
         .unwrap_or_else(|err| {
             handle_error(&err, "Failed to discover OpenID Provider");
             unreachable!();
@@ -208,7 +209,8 @@ fn main() {
             handle_error(&err, "No user info endpoint");
             unreachable!();
         })
-        .request(&http_client)
+        .request_async(&http_client)
+        .await
         .unwrap_or_else(|err| {
             handle_error(&err, "Failed to contact token endpoint");
             unreachable!();
@@ -244,7 +246,8 @@ fn main() {
             handle_error(&err, "Failed to revoke token");
             unreachable!();
         })
-        .request(&http_client)
+        .request_async(&http_client)
+        .await
         .unwrap_or_else(|err| {
             handle_error(&err, "Failed to revoke token");
             unreachable!();
