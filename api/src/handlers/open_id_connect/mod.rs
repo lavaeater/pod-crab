@@ -33,6 +33,7 @@ use std::env;
 use std::io::{BufRead, BufReader, Write};
 use std::net::TcpListener;
 use std::process::exit;
+use reqwest::ClientBuilder;
 
 fn handle_error<T: std::error::Error>(fail: &T, msg: &'static str) {
     let mut err_msg = format!("ERROR: {}", msg);
@@ -84,7 +85,7 @@ fn main() {
             unreachable!();
         });
 
-    let http_client = reqwest::blocking::ClientBuilder::new()
+    let http_client = ClientBuilder::new()
         // Following redirects opens the client up to SSRF vulnerabilities.
         .redirect(reqwest::redirect::Policy::none())
         .build()
