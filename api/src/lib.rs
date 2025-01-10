@@ -7,6 +7,7 @@ use poem::{get, EndpointExt, Route, Server};
 use sea_orm::{Database, DatabaseConnection};
 use serde::Deserialize;
 use std::env;
+use poem::session::{CookieConfig, CookieSession};
 use tera::Tera;
 
 mod handlers;
@@ -61,6 +62,7 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
             "/dist",
             StaticFilesEndpoint::new(format!("{}/dist", &root_path)),
         )
+        .with(CookieSession::new(CookieConfig::default())) //.secure(true)
         .data(state)
         .data(google_client);
     let server = Server::new(TcpListener::bind(format!("{host}:{port}")));

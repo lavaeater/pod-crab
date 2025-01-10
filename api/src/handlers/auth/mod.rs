@@ -170,7 +170,7 @@ fn get_http_client() -> reqwest::Client {
 }
 
 #[handler]
-async fn login(auth_client: Data<&GoogleClient>) -> Result<Redirect> {
+async fn login(auth_client: Data<&GoogleClient>) -> Result<Response> {
     let (authorize_url, _csrf_state, _nonce) = auth_client
         .0
         .authorize_url(
@@ -180,15 +180,20 @@ async fn login(auth_client: Data<&GoogleClient>) -> Result<Redirect> {
         )
         .add_scope(Scope::new("email".to_string()))
         .url();
-
-    Ok(Redirect::temporary(authorize_url.to_string()))
+    // Access-Control-Allow-Origin
+    Ok(Response::builder()
+        .status(StatusCode::FOUND)
+        .header("Location", authorize_url.to_string())
+        .header("Access-Control-Allow-Origin", "*")
+        .finish())
 }
 
 #[handler]
 async fn auth_callback(
     auth_client: Data<&GoogleClient>,
     query: poem::web::Query<HashMap<String, String>>,
-) -> Result<String> {
+    session: &Session
+) -> Result<Redirect> {
     let code = query.get("code");
     if let Some(code) = code {
         let http_client = get_http_client();
@@ -216,8 +221,11 @@ async fn auth_callback(
                 handle_error(&err, "Failed to verify ID token");
                 unreachable!();
             });
-        let email = id_token_claims.email().unwrap();
-        return Ok(format!("User logged in with email: {}", email.to_string()));
+        if let Some(email) = id_token_claims.email() {
+            session.set("email", email.to_string());
+        }
+        
+        return Ok(Redirect::temporary("/".to_string()));
     }
     Err(NotFoundError.into())
 }
