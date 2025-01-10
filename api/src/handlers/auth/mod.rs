@@ -170,7 +170,7 @@ fn get_http_client() -> reqwest::Client {
 }
 
 #[handler]
-async fn login(auth_client: Data<&GoogleClient>) -> Result<Response> {
+async fn login(auth_client: Data<&GoogleClient>) -> Result<impl IntoResponse> {
     let (authorize_url, _csrf_state, _nonce) = auth_client
         .0
         .authorize_url(
@@ -181,11 +181,9 @@ async fn login(auth_client: Data<&GoogleClient>) -> Result<Response> {
         .add_scope(Scope::new("email".to_string()))
         .url();
     // Access-Control-Allow-Origin
-    Ok(Response::builder()
-        .status(StatusCode::FOUND)
-        .header("Location", authorize_url.to_string())
-        .header("Access-Control-Allow-Origin", "*")
-        .finish())
+    Ok(StatusCode::FOUND
+        .with_header("HX-Redirect", authorize_url.to_string())
+        .with_header("Access-Control-Allow-Origin", "*"))
 }
 
 #[handler]
