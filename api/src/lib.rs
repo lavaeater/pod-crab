@@ -6,7 +6,7 @@ use sea_orm::{Database, DatabaseConnection};
 use serde::Deserialize;
 use tera::Tera;
 use migration::{Migrator, MigratorTrait};
-use crate::handlers::{index, members, open_id_connect, posts};
+use crate::handlers::{index, members, open_id_connect, posts, auth};
 
 mod handlers;
 
@@ -34,8 +34,6 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     // get env vars
     dotenvy::dotenv().ok();
     
-    open_id_connect::fjonk_e_bonke().await;
-    
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
     let host = env::var("HOST").expect("HOST is not set in .env file");
     let port = env::var("PORT").expect("PORT is not set in .env file");
@@ -53,6 +51,7 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
         .at("/", get(index::index))
         .nest("/posts", posts::routes())
         .nest("/members", members::routes())
+        .nest("/auth", auth::routes())
         .nest(
             "/static",
             StaticFilesEndpoint::new(format!("{}/static", &root_path)),

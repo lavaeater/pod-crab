@@ -210,6 +210,7 @@ dependencies = [
  "entities",
  "env_logger",
  "migration",
+ "oauth2",
  "openidconnect",
  "poem",
  "reqwest",
@@ -2802,6 +2803,8 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "poem-derive",
+ "priority-queue",
+ "rand",
  "regex",
  "rfc7239",
  "serde",
@@ -2903,6 +2906,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "353e1ca18966c16d9deb1c69278edbc5f194139612772bd9537af60ac231e1e6"
 dependencies = [
  "elliptic-curve",
+]
+
+[[package]]
+name = "priority-queue"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "714c75db297bc88a63783ffc6ab9f830698a6705aa0201416931759ef4c8183d"
+dependencies = [
+ "autocfg",
+ "equivalent",
+ "indexmap 2.6.0",
 ]
 
 [[package]]
