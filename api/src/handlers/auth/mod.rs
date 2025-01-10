@@ -1,23 +1,15 @@
-use openidconnect::core::{
-    CoreAuthDisplay, CoreClaimName, CoreClaimType, CoreClient, CoreClientAuthMethod, CoreGrantType,
-    CoreIdTokenClaims, CoreIdTokenVerifier, CoreJsonWebKey, CoreJweContentEncryptionAlgorithm,
-    CoreJweKeyManagementAlgorithm, CoreResponseMode, CoreResponseType, CoreRevocableToken,
-    CoreSubjectIdentifierType,
-};
-use openidconnect::{reqwest, Client};
+use openidconnect::core::{CoreAuthDisplay, CoreAuthPrompt, CoreClaimName, CoreClaimType, CoreClient, CoreClientAuthMethod, CoreGenderClaim, CoreGrantType, CoreIdTokenClaims, CoreIdTokenVerifier, CoreJsonWebKey, CoreJsonWebKeyType, CoreJsonWebKeyUse, CoreJweContentEncryptionAlgorithm, CoreJweKeyManagementAlgorithm, CoreJwsSigningAlgorithm, CoreResponseMode, CoreResponseType, CoreRevocableToken, CoreSubjectIdentifierType, CoreTokenResponse};
+use openidconnect::{reqwest, Client, EmptyAdditionalClaims, StandardErrorResponse};
 use openidconnect::{
     AdditionalProviderMetadata, AuthenticationFlow, AuthorizationCode, ClientId, ClientSecret,
     CsrfToken, IssuerUrl, Nonce, OAuth2TokenResponse, ProviderMetadata, RedirectUrl, RevocationUrl,
     Scope,
 };
+
 use serde::{Deserialize, Serialize};
-use url::Url;
 
 use anyhow::Result;
-use reqwest::ClientBuilder;
 use std::env;
-use std::io::{BufRead, BufReader, Write};
-use std::net::TcpListener;
 use std::process::exit;
 
 // Teach openidconnect-rs about a Google custom extension to the OpenID Discovery response that we can use as the RFC
@@ -37,6 +29,9 @@ type GoogleProviderMetadata = ProviderMetadata<
     CoreGrantType,
     CoreJweContentEncryptionAlgorithm,
     CoreJweKeyManagementAlgorithm,
+    CoreJwsSigningAlgorithm,
+    CoreJsonWebKeyType,
+    CoreJsonWebKeyUse,
     CoreJsonWebKey,
     CoreResponseMode,
     CoreResponseType,
@@ -67,26 +62,8 @@ async fn setup_openid_client() -> Result<CoreClient> {
             handle_error(&err, "Invalid issuer URL");
             unreachable!();
         });
-
-    let http_client = ClientBuilder::new()
-        // Following redirects opens the client up to SSRF vulnerabilities.
-        .redirect(reqwest::redirect::Policy::none())
-        .build()
-        .unwrap_or_else(|err| {
-            handle_error(&err, "Failed to build HTTP client");
-            unreachable!();
-        });
-
-    // Fetch Google's OpenID Connect discovery document.
-    //
-    // Note: If we don't care about token revocation we can simply use CoreProviderMetadata here
-    // instead of GoogleProviderMetadata. If instead we wanted to optionally use the token
-    // revocation endpoint if it seems to be supported we could do something like this:
-    //   #[derive(Clone, Debug, Deserialize, Serialize)]
-    //   struct AllOtherProviderMetadata(HashMap<String, serde_json::Value>);
-    //   impl AdditionalClaims for AllOtherProviderMetadata {}
-    // And then test for the presence of "revocation_endpoint" in the map returned by a call to
-    // .additional_metadata().
+    
+    let http_client = ::async_http_client()
 
     let provider_metadata = GoogleProviderMetadata::discover_async(issuer_url, &http_client)
         .await
@@ -105,7 +82,7 @@ async fn setup_openid_client() -> Result<CoreClient> {
     );
 
     // Set up the config for the Google OAuth2 process.
-    let client = CoreClient::from_provider_metadata(
+    let client= CoreClient::from_provider_metadata(
         provider_metadata,
         google_client_id,
         Some(google_client_secret),
