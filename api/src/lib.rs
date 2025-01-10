@@ -4,11 +4,16 @@ use migration::{Migrator, MigratorTrait};
 use poem::endpoint::StaticFilesEndpoint;
 use poem::listener::TcpListener;
 use poem::{get, EndpointExt, Route, Server};
-use sea_orm::{Database, DatabaseConnection};
+use sea_orm::{ActiveModelTrait, Database, DatabaseConnection};
 use serde::Deserialize;
 use std::env;
+use std::str::FromStr;
 use poem::session::{CookieConfig, CookieSession};
+use sea_orm::ActiveValue::Set;
+use sea_orm::prelude::Uuid;
 use tera::Tera;
+use entities::prelude::User;
+use entities::user;
 
 mod handlers;
 
@@ -44,6 +49,9 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     // create post table if not exists
     let conn = Database::connect(&db_url).await.unwrap();
     Migrator::up(&conn, None).await.unwrap();
+    
+    ensure_super_admin(&conn).await;
+    
     let templates = Tera::new(&format!("{}/templates/**/*", &root_path)).unwrap();
     let google_client = setup_openid_client().await.unwrap();
     let state = AppState { templates, conn};
@@ -67,6 +75,16 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
         .data(google_client);
     let server = Server::new(TcpListener::bind(format!("{host}:{port}")));
     server.run(app).await
+}
+
+async fn ensure_super_admin(database_connection: &DatabaseConnection) {
+    let u = user::ActiveModel {
+        id: Set(Uuid::from_str("920b2fc5-d127-4003-b3f9-43bb685558d4").unwrap()),
+        email: Set("tommie.nygren@gmail.com".to_string()),
+        name: Set("Tommie Nygren".to_string()),
+    }
+        .insert(database_connection)
+        .await;
 }
 
 pub fn main(root_path: Option<String>) {
