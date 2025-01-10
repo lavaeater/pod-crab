@@ -7,6 +7,7 @@ use serde::Deserialize;
 use tera::Tera;
 use migration::{Migrator, MigratorTrait};
 use crate::handlers::{index, members, open_id_connect, posts, auth};
+use crate::handlers::auth::{auth_middleware, setup_openid_client, GoogleClient};
 
 mod handlers;
 
@@ -16,7 +17,7 @@ const DEFAULT_ITEMS_PER_PAGE: u64 = 5;
 #[derive(Debug, Clone)]
 struct AppState {
     templates: Tera,
-    conn: DatabaseConnection,
+    conn: DatabaseConnection
 }
 
 #[derive(Deserialize, Default)]
@@ -43,13 +44,14 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     let conn = Database::connect(&db_url).await.unwrap();
     Migrator::up(&conn, None).await.unwrap();
     let templates = Tera::new(&format!("{}/templates/**/*", &root_path)).unwrap();
-    let state = AppState { templates, conn };
+    let google_client = setup_openid_client().await.unwrap();
+    let state = AppState { templates, conn};
 
     println!("Starting server at {server_url}");
 
     let app = Route::new()
         .at("/", get(index::index))
-        .nest("/posts", posts::routes())
+        .nest("/posts", posts::routes()).around(auth_middleware)
         .nest("/members", members::routes())
         .nest("/auth", auth::routes())
         .nest(
@@ -60,7 +62,8 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
             "/dist",
             StaticFilesEndpoint::new(format!("{}/dist", &root_path)),
         )
-        .data(state);
+        .data(state)
+        .data(google_client);
     let server = Server::new(TcpListener::bind(format!("{host}:{port}")));
     server.run(app).await
 }

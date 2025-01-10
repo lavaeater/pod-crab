@@ -1,8 +1,9 @@
 use openidconnect::core::{
     CoreAuthDisplay, CoreAuthPrompt, CoreClaimName, CoreClaimType, CoreClient,
-    CoreClientAuthMethod, CoreGenderClaim, CoreGrantType, CoreJsonWebKey,
-    CoreJweContentEncryptionAlgorithm, CoreJweKeyManagementAlgorithm, CoreResponseMode,
-    CoreResponseType, CoreSubjectIdentifierType, CoreTokenIntrospectionResponse, CoreTokenResponse,
+    CoreClientAuthMethod, CoreGenderClaim, CoreGrantType, CoreIdTokenClaims, CoreIdTokenVerifier,
+    CoreJsonWebKey, CoreJweContentEncryptionAlgorithm, CoreJweKeyManagementAlgorithm,
+    CoreResponseMode, CoreResponseType, CoreSubjectIdentifierType, CoreTokenIntrospectionResponse,
+    CoreTokenResponse,
 };
 use openidconnect::{
     AdditionalProviderMetadata, AuthenticationFlow, Client, ClientId, ClientSecret,
@@ -15,15 +16,15 @@ use serde::{Deserialize, Serialize};
 
 use crate::handlers::members::{create, destroy, edit, list, new, update};
 use oauth2::basic::{BasicErrorResponseType, BasicRevocationErrorResponse};
-use oauth2::{AuthorizationCode, CsrfToken, EndpointMaybeSet, EndpointNotSet, EndpointSet, Scope, StandardRevocableToken};
-use poem::error::{NotFoundError};
+use oauth2::{
+    AuthorizationCode, CsrfToken, EndpointMaybeSet, EndpointNotSet, EndpointSet, Scope,
+    StandardRevocableToken,
+};
+use poem::error::NotFoundError;
 use poem::http::StatusCode;
 use poem::session::Session;
 use poem::web::{Data, Redirect};
-use poem::{
-    get, handler, Endpoint, IntoResponse, Middleware, Request, Response, Result,
-    Route,
-};
+use poem::{get, handler, Endpoint, EndpointExt, IntoResponse, Middleware, Request, Response, Result, Route};
 use std::env;
 use std::process::exit;
 
@@ -53,6 +54,7 @@ type GoogleProviderMetadata = ProviderMetadata<
 pub mod prelude {
     pub use super::auth_middleware;
     pub use super::routes;
+    pub use super::setup_openid_client;
 }
 
 pub async fn auth_middleware<E: Endpoint>(next: E, mut req: Request) -> Result<Response> {
@@ -108,7 +110,7 @@ fn handle_error<T: std::error::Error>(fail: &T, msg: &'static str) {
     exit(1);
 }
 
-async fn setup_openid_client() -> anyhow::Result<GoogleClient> {
+pub async fn setup_openid_client() -> anyhow::Result<GoogleClient> {
     let google_client_id = ClientId::new(
         env::var("GOOGLE_CLIENT_ID").expect("Missing the GOOGLE_CLIENT_ID environment variable."),
     );
@@ -122,13 +124,7 @@ async fn setup_openid_client() -> anyhow::Result<GoogleClient> {
             unreachable!();
         });
 
-    let http_client = reqwest::ClientBuilder::new()
-        .redirect(reqwest::redirect::Policy::none())
-        .build()
-        .unwrap_or_else(|err| {
-            handle_error(&err, "Failed to create HTTP client");
-            unreachable!();
-        });
+    let http_client = get_http_client();
 
     let provider_metadata = GoogleProviderMetadata::discover_async(issuer_url, &http_client)
         .await
@@ -170,6 +166,16 @@ async fn setup_openid_client() -> anyhow::Result<GoogleClient> {
     Ok(client)
 }
 
+fn get_http_client() -> reqwest::Client {
+    reqwest::ClientBuilder::new()
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .unwrap_or_else(|err| {
+            handle_error(&err, "Failed to create HTTP client");
+            unreachable!();
+        })
+}
+
 #[handler]
 async fn login(auth_client: Data<&GoogleClient>) -> Result<Redirect> {
     let (authorize_url, csrf_state, nonce) = auth_client
@@ -177,7 +183,7 @@ async fn login(auth_client: Data<&GoogleClient>) -> Result<Redirect> {
         .authorize_url(
             AuthenticationFlow::<CoreResponseType>::AuthorizationCode,
             CsrfToken::new_random,
-            Nonce::new_random,
+            || Nonce::new("expected_nonce".to_string()),
         )
         .add_scope(Scope::new("email".to_string()))
         .url();
@@ -192,66 +198,39 @@ async fn auth_callback(
 ) -> Result<String> {
     let code = query.get("code");
     if let Some(code) = code {
+        let http_client = get_http_client();
+
         let token_response = auth_client
-            .exchange_code(AuthorizationCode::new(code.to_string())).unwrap().request_async();
-        /*
-        / Exchange the code with a token.
-    let token_response = client
-        .exchange_code(code)
-        .unwrap_or_else(|err| {
-            handle_error(&err, "No user info endpoint");
-            unreachable!();
-        })
-        .request(&http_client)
-        .unwrap_or_else(|err| {
-            handle_error(&err, "Failed to contact token endpoint");
-            unreachable!();
-        });
+            .exchange_code(AuthorizationCode::new(code.to_string()))
+            .unwrap()
+            .request_async(&http_client)
+            .await.unwrap_or_else(|err| {
+                handle_error(&err, "Failed to exchange code for token");
+                unreachable!();
+            });
 
-    println!(
-        "Google returned access token:\n{}\n",
-        token_response.access_token().secret()
-    );
-    println!("Google returned scopes: {:?}", token_response.scopes());
-
-    let id_token_verifier: CoreIdTokenVerifier = client.id_token_verifier();
-    let id_token_claims: &CoreIdTokenClaims = token_response
-        .extra_fields()
-        .id_token()
-        .expect("Server did not return an ID token")
-        .claims(&id_token_verifier, &nonce)
-        .unwrap_or_else(|err| {
-            handle_error(&err, "Failed to verify ID token");
-            unreachable!();
-        });
-         */
-        
-        
-        
-        if let Ok(token_response) = token_response {
-            let id_token = token_response
-                .id_token()
-                .ok_or_else(|| poem::Error::unauthorized("No ID token found"))?;
-
-            let claims = id_token
-                .claims(
-                    &auth_client.id_token_verifier(),
-                    &Nonce::new("expected_nonce".to_string()),
-                )
-                .unwrap();
-            let email = claims.email().unwrap();
-
-            // Optionally store the email address in your app
-            Ok(format!("User logged in with email: {}", email))
-        }
-    } 
-        Err(NotFoundError.into()) 
+        let id_token_verifier: CoreIdTokenVerifier = auth_client.id_token_verifier();
+        let id_token_claims: &CoreIdTokenClaims = token_response
+            .extra_fields()
+            .id_token()
+            .expect("Server did not return an ID token")
+            .claims(
+                &id_token_verifier,
+                &Nonce::new("expected_nonce".to_string()),
+            )
+            .unwrap_or_else(|err| {
+                handle_error(&err, "Failed to verify ID token");
+                unreachable!();
+            });
+        let email = id_token_claims.email().unwrap();
+        return Ok(format!("User logged in with email: {}", email.to_string()));
+    }
+    Err(NotFoundError.into())
 }
 
 // A function to define all routes related to posts
 pub fn routes() -> Route {
     Route::new()
-        .at("/login", get(list).post(create))
-        .at("/callback", get(new))
-        .at("/:id", get(edit).patch(update).delete(destroy))
+        .at("/login", get(login))
+        .at("/callback", get(auth_callback))
 }
