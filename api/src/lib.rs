@@ -1,13 +1,13 @@
-use std::env;
-use poem::{get, EndpointExt, Route, Server};
+use crate::handlers::auth::{auth_middleware, setup_openid_client};
+use crate::handlers::{auth, index, members, posts};
+use migration::{Migrator, MigratorTrait};
 use poem::endpoint::StaticFilesEndpoint;
 use poem::listener::TcpListener;
+use poem::{get, EndpointExt, Route, Server};
 use sea_orm::{Database, DatabaseConnection};
 use serde::Deserialize;
+use std::env;
 use tera::Tera;
-use migration::{Migrator, MigratorTrait};
-use crate::handlers::{index, members, open_id_connect, posts, auth};
-use crate::handlers::auth::{auth_middleware, setup_openid_client, GoogleClient};
 
 mod handlers;
 
@@ -48,11 +48,10 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     let state = AppState { templates, conn};
 
     println!("Starting server at {server_url}");
-
     let app = Route::new()
         .at("/", get(index::index))
-        .nest("/posts", posts::routes()).around(auth_middleware)
-        .nest("/members", members::routes())
+        .nest("/posts", posts::routes().around(auth_middleware))
+        .nest("/members", members::routes().around(auth_middleware))
         .nest("/auth", auth::routes())
         .nest(
             "/static",

@@ -14,7 +14,6 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::handlers::members::{create, destroy, edit, list, new, update};
 use oauth2::basic::{BasicErrorResponseType, BasicRevocationErrorResponse};
 use oauth2::{
     AuthorizationCode, CsrfToken, EndpointMaybeSet, EndpointNotSet, EndpointSet, Scope,
@@ -24,7 +23,7 @@ use poem::error::NotFoundError;
 use poem::http::StatusCode;
 use poem::session::Session;
 use poem::web::{Data, Redirect};
-use poem::{get, handler, Endpoint, EndpointExt, IntoResponse, Middleware, Request, Response, Result, Route};
+use poem::{get, handler, Endpoint, IntoResponse, Request, Response, Result, Route};
 use std::env;
 use std::process::exit;
 
@@ -51,18 +50,12 @@ type GoogleProviderMetadata = ProviderMetadata<
     CoreSubjectIdentifierType,
 >;
 
-pub mod prelude {
-    pub use super::auth_middleware;
-    pub use super::routes;
-    pub use super::setup_openid_client;
-}
-
-pub async fn auth_middleware<E: Endpoint>(next: E, mut req: Request) -> Result<Response> {
+pub async fn auth_middleware<E: Endpoint>(next: E, req: Request) -> Result<Response> {
     let session = req.extensions().get::<Session>();
 
     if let Some(session) = session {
         // Check if user is logged in
-        if session.get::<String>("user_id").is_some() {
+        if session.get::<String>("email").is_some() {
             // User is logged in, proceed to the endpoint
             return match next.call(req).await {
                 Ok(res) => Ok(res.into_response()),
@@ -178,7 +171,7 @@ fn get_http_client() -> reqwest::Client {
 
 #[handler]
 async fn login(auth_client: Data<&GoogleClient>) -> Result<Redirect> {
-    let (authorize_url, csrf_state, nonce) = auth_client
+    let (authorize_url, _csrf_state, _nonce) = auth_client
         .0
         .authorize_url(
             AuthenticationFlow::<CoreResponseType>::AuthorizationCode,
@@ -204,7 +197,8 @@ async fn auth_callback(
             .exchange_code(AuthorizationCode::new(code.to_string()))
             .unwrap()
             .request_async(&http_client)
-            .await.unwrap_or_else(|err| {
+            .await
+            .unwrap_or_else(|err| {
                 handle_error(&err, "Failed to exchange code for token");
                 unreachable!();
             });
