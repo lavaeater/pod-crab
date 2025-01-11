@@ -1,3 +1,6 @@
+pub(crate) mod required_role_middleware;
+pub(crate) mod login_required_middleware;
+
 use openidconnect::core::{
     CoreAuthDisplay, CoreAuthPrompt, CoreClaimName, CoreClaimType, CoreClient,
     CoreClientAuthMethod, CoreGenderClaim, CoreGrantType, CoreIdTokenVerifier,
@@ -23,7 +26,7 @@ use poem::error::NotFoundError;
 use poem::http::StatusCode;
 use poem::session::Session;
 use poem::web::{Data, Redirect};
-use poem::{get, handler, Endpoint, IntoResponse, Request, Response, Result, Route};
+use poem::{get, handler, Endpoint, IntoResponse, Middleware, Request, Response, Result, Route};
 use std::env;
 use std::string::ToString;
 use sea_orm::ActiveValue::Set;
@@ -55,31 +58,6 @@ type GoogleProviderMetadata = ProviderMetadata<
     CoreResponseType,
     CoreSubjectIdentifierType,
 >;
-
-pub async fn auth_middleware<E: Endpoint>(next: E, req: Request) -> Result<Response> {
-    let session = req.extensions().get::<Session>();
-
-    if let Some(session) = session {
-        // Check if user is logged in
-        if session.get::<User>("current_user").is_some() {
-            // User is logged in, proceed to the endpoint
-            return match next.call(req).await {
-                Ok(res) => Ok(res.into_response()),
-                Err(err) => {
-                    eprintln!("Error: {:?}", err);
-                    Err(err)
-                }
-            };
-        } else {
-            session.set(REDIRECT_AFTER_LOGIN_KEY, req.uri().path().to_string());
-        }
-    }
-
-    Ok(Response::builder()
-        .status(StatusCode::FOUND)
-        .header("Location", "/auth/login")
-        .finish())
-}
 
 const REDIRECT_AFTER_LOGIN_KEY: &str = "redirect_after_login"; 
 const NONCE_KEY: &str = "nonce";
