@@ -4,7 +4,7 @@ use migration::{Migrator, MigratorTrait};
 use poem::endpoint::StaticFilesEndpoint;
 use poem::listener::TcpListener;
 use poem::{get, EndpointExt, Route, Server};
-use sea_orm::{ActiveModelTrait, Database, DatabaseConnection};
+use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, EntityTrait};
 use serde::Deserialize;
 use std::env;
 use std::str::FromStr;
@@ -78,8 +78,13 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
 }
 
 async fn ensure_super_admin(database_connection: &DatabaseConnection) {
+    let user_id = Uuid::from_str("920b2fc5-d127-4003-b3f9-43bb685558d4").unwrap();
+    if let Ok(Some(user)) = user::Entity::find_by_id(&user_id).one(database_connection).await {
+        return;
+    }
+    
     let u = user::ActiveModel {
-        id: Set(Uuid::from_str("920b2fc5-d127-4003-b3f9-43bb685558d4").unwrap()),
+        id: Set(user_id),
         email: Set("tommie.nygren@gmail.com".to_string()),
         name: Set("Tommie Nygren".to_string()),
     }

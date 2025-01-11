@@ -26,6 +26,7 @@ use poem::web::{Data, Redirect};
 use poem::{get, handler, Endpoint, IntoResponse, Request, Response, Result, Route};
 use std::env;
 use std::process::exit;
+use std::string::ToString;
 
 // Teach openidconnect-rs about a Google custom extension to the OpenID Discovery response that we can use as the RFC
 // 7009 OAuth 2.0 Token Revocation endpoint. For more information about the Google specific Discovery response see the
@@ -55,7 +56,7 @@ pub async fn auth_middleware<E: Endpoint>(next: E, req: Request) -> Result<Respo
 
     if let Some(session) = session {
         // Check if user is logged in
-        if session.get::<String>("email").is_some() {
+        if session.get::<String>("user_id").is_some() {
             // User is logged in, proceed to the endpoint
             return match next.call(req).await {
                 Ok(res) => Ok(res.into_response()),
@@ -64,14 +65,19 @@ pub async fn auth_middleware<E: Endpoint>(next: E, req: Request) -> Result<Respo
                     Err(err)
                 }
             };
+        } else {
+            session.set(&REDIRECT_AFTER_LOGIN, req.uri().path().to_string());
         }
     }
+
     Ok(Response::builder()
         .status(StatusCode::FOUND)
         .header("Location", "/auth/login")
         .finish())
 }
 
+const REDIRECT_AFTER_LOGIN: String = "redirect_after_login".to_string(); 
+const NONCE_KEY: String = "nonce".to_string();
 pub type GoogleClient = Client<
     EmptyAdditionalClaims,
     CoreAuthDisplay,
@@ -170,16 +176,19 @@ fn get_http_client() -> reqwest::Client {
 }
 
 #[handler]
-async fn login(auth_client: Data<&GoogleClient>) -> Result<impl IntoResponse> {
-    let (authorize_url, _csrf_state, _nonce) = auth_client
+async fn login(session: &Session, auth_client: Data<&GoogleClient>) -> Result<impl IntoResponse> {
+    let (authorize_url, _csrf_state, nonce) = auth_client
         .0
         .authorize_url(
             AuthenticationFlow::<CoreResponseType>::AuthorizationCode,
             CsrfToken::new_random,
-            || Nonce::new("expected_nonce".to_string()),
+            Nonce::new_random,
         )
         .add_scope(Scope::new("email".to_string()))
         .url();
+    
+        session.set(&NONCE_KEY, nonce.secret().to_string());
+    
     // Access-Control-Allow-Origin
     Ok(StatusCode::FOUND
         .with_header("HX-Redirect", authorize_url.to_string())
@@ -190,7 +199,7 @@ async fn login(auth_client: Data<&GoogleClient>) -> Result<impl IntoResponse> {
 async fn auth_callback(
     auth_client: Data<&GoogleClient>,
     query: poem::web::Query<HashMap<String, String>>,
-    session: &Session
+    session: &Session,
 ) -> Result<Redirect> {
     let code = query.get("code");
     if let Some(code) = code {
@@ -222,7 +231,7 @@ async fn auth_callback(
         if let Some(email) = id_token_claims.email() {
             session.set("email", email.to_string());
         }
-        
+
         return Ok(Redirect::temporary("/".to_string()));
     }
     Err(NotFoundError.into())
