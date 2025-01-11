@@ -116,18 +116,13 @@ pub async fn destroy(
 }
 
 // A function to define all routes related to posts
-pub fn routes() -> Route {
+pub fn member_routes() -> Route {
     Route::new()
+        .at("/", get(list).around(login_required_middleware))
         .at(
-            "/",
-            get(list)
-                .around(login_required_middleware),
+            "/create",
+            post(create).with(RequiredRoleMiddleware::new("super_admin")),
         )
-        .at(
-            "/", 
-            post(create)
-                .with(RequiredRoleMiddleware::new("super_admin")),
-        )
-        .at("/new", get(new))
-        .at("/:id", get(edit).patch(update).delete(destroy))
+        .at("/new", get(new).with(RequiredRoleMiddleware::new("super_admin")))
+        .at("/:id", get(edit).patch(update).delete(destroy).with(RequiredRoleMiddleware::new("super_admin")))
 }

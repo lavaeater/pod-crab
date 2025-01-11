@@ -19,6 +19,7 @@ tera = "1.20.0"
 sea-orm = "1.1.2"
 tokio = { version = "1.41.1", features = ["macros", "rt-multi-thread"] }
 poem = { version = "3.1.6", features = ["static-files","cookie","csrf", "fluent", "fluent-syntax", "i18n", "requestid", "session"] }
+poem-openapi = "5.1.5"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 dotenvy = "0.15.7"
 openidconnect = "4.0.0-rc.1"

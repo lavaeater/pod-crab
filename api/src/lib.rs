@@ -58,8 +58,8 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     println!("Starting server at {server_url}");
     let app = Route::new()
         .at("/", get(index::index))
-        .nest("/posts", posts::routes())
-        .nest("/members", members::routes())
+        .nest("/posts", posts::post_routes())
+        .nest("/members", members::member_routes())
         .nest("/auth", auth::routes())
         .nest(
             "/static",

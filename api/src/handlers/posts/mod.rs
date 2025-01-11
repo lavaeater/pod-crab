@@ -113,11 +113,11 @@ pub async fn destroy(
     Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/posts"))
 }
 
-pub fn routes() -> Route {
+pub fn post_routes() -> Route {
     Route::new()
         .at("/", get(list).around(login_required_middleware))
         .at(
-            "/",
+            "/create",
             post(create).with(RequiredRoleMiddleware::new("super_admin")),
         )
         .at(
