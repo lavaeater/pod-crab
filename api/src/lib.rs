@@ -1,4 +1,4 @@
-use crate::handlers::auth::{auth_middleware, setup_openid_client};
+use crate::handlers::auth::{auth_middleware, setup_openid_client, GoogleClient};
 use crate::handlers::{auth, index, members, posts};
 use migration::{Migrator, MigratorTrait};
 use poem::endpoint::StaticFilesEndpoint;
@@ -8,6 +8,7 @@ use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, EntityTrait};
 use serde::Deserialize;
 use std::env;
 use std::str::FromStr;
+use openidconnect::Nonce;
 use poem::session::{CookieConfig, CookieSession};
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::Uuid;
@@ -24,6 +25,12 @@ const DEFAULT_ITEMS_PER_PAGE: u64 = 5;
 struct AppState {
     templates: Tera,
     conn: DatabaseConnection
+}
+
+#[derive(Debug, Clone)]
+struct OpenIdData {
+    google_client: GoogleClient,
+    nonce: Option<Nonce>,
 }
 
 #[derive(Deserialize, Default)]
@@ -55,6 +62,10 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     let templates = Tera::new(&format!("{}/templates/**/*", &root_path)).unwrap();
     let google_client = setup_openid_client().await.unwrap();
     let state = AppState { templates, conn };
+    let open_id_data = OpenIdData {
+        google_client,
+        nonce: None,
+    };
 
     println!("Starting server at {server_url}");
     let app = Route::new()
@@ -72,7 +83,7 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
         )
         .with(CookieSession::new(CookieConfig::default())) //.secure(true)
         .data(state)
-        .data(google_client);
+        .data(open_id_data);
     let server = Server::new(TcpListener::bind(format!("{host}:{port}")));
     server.run(app).await
 }
@@ -87,6 +98,7 @@ async fn ensure_super_admin(database_connection: &DatabaseConnection) {
         id: Set(user_id),
         email: Set("tommie.nygren@gmail.com".to_string()),
         name: Set("Tommie Nygren".to_string()),
+        role: Set("super_admin".to_string()),
     }
         .insert(database_connection)
         .await;

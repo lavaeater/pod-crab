@@ -111,7 +111,6 @@ pub async fn destroy(
     Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/posts"))
 }
 
-// A function to define all routes related to posts
 pub fn routes() -> Route {
     Route::new()
         .at("/", get(list).post(create))

@@ -17,6 +17,7 @@ impl MigrationTrait for Migration {
                     .col(pk_uuid(User::Id))
                     .col(string(User::Email))
                     .col(string(User::Name))
+                    .col(string(User::Role).default("user"))
                     .to_owned(),
             )
             .await?;
@@ -29,7 +30,6 @@ impl MigrationTrait for Migration {
                     .col(pk_uuid(Episode::Id))
                     .col(string(Episode::Title))
                     .col(string(Episode::Summary))
-                    .col(string(Episode::Tags))
                     .col(string(Episode::Tags))
                     .col(string_null(Episode::Url))
                     .to_owned(),

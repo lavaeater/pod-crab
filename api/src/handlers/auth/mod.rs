@@ -27,8 +27,10 @@ use poem::{get, handler, Endpoint, IntoResponse, Request, Response, Result, Rout
 use std::env;
 use std::process::exit;
 use std::string::ToString;
+use sea_orm::ActiveValue::Set;
+use sea_orm::{ActiveModelTrait, NotSet};
 use entities::user;
-use crate::AppState;
+use crate::{AppState, OpenIdData};
 
 use service::Query as QueryCore;
 
@@ -180,9 +182,9 @@ fn get_http_client() -> reqwest::Client {
 }
 
 #[handler]
-async fn login(session: &Session, auth_client: Data<&GoogleClient>) -> Result<impl IntoResponse> {
+async fn login(session: &Session, auth_client: Data<&mut OpenIdData>) -> Result<impl IntoResponse> {
     let (authorize_url, _csrf_state, nonce) = auth_client
-        .0
+        .google_client
         .authorize_url(
             AuthenticationFlow::<CoreResponseType>::AuthorizationCode,
             CsrfToken::new_random,
@@ -191,7 +193,7 @@ async fn login(session: &Session, auth_client: Data<&GoogleClient>) -> Result<im
         .add_scope(Scope::new("email".to_string()))
         .url();
     
-        session.set(NONCE_KEY, nonce.secret().to_string());
+    auth_client.nonce = Some(nonce);
     
     // Access-Control-Allow-Origin
     Ok(StatusCode::FOUND
@@ -221,7 +223,7 @@ async fn auth_callback(
             });
         
         let nonce = session.get::<String>(NONCE_KEY).unwrap_or_default();
-        let nonce = Nonce::new(nonce);
+        let nonce = Nonce(nonce);
 
         let id_token_verifier: CoreIdTokenVerifier = auth_client.id_token_verifier();
         let id_token_claims: &CoreIdTokenClaims = token_response
@@ -241,13 +243,20 @@ async fn auth_callback(
                 .await
             {
                 session.set("user_id", user.id.to_string());
+                session.set("role", user.role.to_string());
             } else {
-                let _u = user::ActiveModel {
+                let u = user::ActiveModel {
+                    id: NotSet,
                     email: Set(email.to_string()),
-                    name: Set(id_token_claims.name().unwrap_or_default().to_string()),
+                    name: Set("".to_string()),
+                    role: NotSet,
                 }
                 .insert(&app_state.conn)
                 .await;
+                if let Ok(u) = u {
+                    session.set("user_id", u.id.to_string());
+                    session.set("role", u.role.to_string());
+                }
             }
             
             session.set("email", email.to_string());
