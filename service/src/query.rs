@@ -1,13 +1,13 @@
 use sea_orm::*;
-use entities::{member, member::Entity as Member};
+use sea_orm::prelude::Uuid;
+use entities::{member, member::Entity as Member, user};
 use entities::{post, post::Entity as Post};
-
-
+use entities::prelude::User;
 
 pub struct Query;
 
 impl Query {
-    pub async fn find_member_by_id(db: &DbConn, id: i32) -> Result<Option<member::Model>, DbErr> {
+    pub async fn find_member_by_id(db: &DbConn, id: Uuid) -> Result<Option<member::Model>, DbErr> {
         Member::find_by_id(id).one(db).await
     }
 
@@ -26,7 +26,7 @@ impl Query {
         // Fetch paginated members
         paginator.fetch_page(page - 1).await.map(|p| (p, num_pages))
     }
-    pub async fn find_post_by_id(db: &DbConn, id: i32) -> Result<Option<post::Model>, DbErr> {
+    pub async fn find_post_by_id(db: &DbConn, id: Uuid) -> Result<Option<post::Model>, DbErr> {
         Post::find_by_id(id).one(db).await
     }
 
@@ -44,5 +44,15 @@ impl Query {
 
         // Fetch paginated posts
         paginator.fetch_page(page - 1).await.map(|p| (p, num_pages))
+    }
+    
+    pub async fn find_user_by_email(
+        db: &DbConn,
+        email: &str,
+    ) -> Result<Option<user::Model>, DbErr> {
+        User::find()
+            .filter(user::Column::Email.contains(email))
+            .one(db)
+            .await
     }
 }

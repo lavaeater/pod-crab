@@ -9,11 +9,11 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Posts::Table)
+                    .table(Post::Table)
                     .if_not_exists()
-                    .col(pk_auto(Posts::Id))
-                    .col(string(Posts::Title))
-                    .col(string(Posts::Text))
+                    .col(pk_uuid(Post::Id))
+                    .col(string(Post::Title))
+                    .col(string(Post::Text))
                     .to_owned(),
             )
             .await
@@ -21,13 +21,13 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Posts::Table).to_owned())
+            .drop_table(Table::drop().table(Post::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum Posts {
+pub enum Post {
     Table,
     Id,
     Title,

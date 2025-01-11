@@ -10,14 +10,14 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Members::Table)
+                    .table(Member::Table)
                     .if_not_exists()
-                    .col(pk_auto(Members::Id))
-                    .col(string(Members::FirstName))
-                    .col(string(Members::LastName))
-                    .col(string(Members::Email))
-                    .col(string(Members::MobilePhone))
-                    .col(date(Members::BirthDate))
+                    .col(pk_uuid(Member::Id))
+                    .col(string(Member::FirstName))
+                    .col(string(Member::LastName))
+                    .col(string(Member::Email))
+                    .col(string(Member::MobilePhone))
+                    .col(date(Member::BirthDate))
                     .to_owned(),
             )
             .await
@@ -26,13 +26,13 @@ impl MigrationTrait for Migration {
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         // Replace the sample below with your own migration scripts
         manager
-            .drop_table(Table::drop().table(Members::Table).to_owned())
+            .drop_table(Table::drop().table(Member::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-enum Members {
+enum Member {
     Table,
     Id,
     FirstName,

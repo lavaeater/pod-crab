@@ -4,6 +4,7 @@ use poem::error::InternalServerError;
 use poem::http::StatusCode;
 use poem::web::{Data, Form, Html, Path, Query};
 use poem::{get, handler, Error, IntoResponse, Route};
+use sea_orm::prelude::Uuid;
 use service::{Mutation as MutationCore, Query as QueryCore};
 
 #[handler]
@@ -57,7 +58,7 @@ pub async fn new(state: Data<&AppState>) -> poem::Result<impl IntoResponse> {
 }
 
 #[handler]
-pub async fn edit(state: Data<&AppState>, Path(id): Path<i32>) -> poem::Result<impl IntoResponse> {
+pub async fn edit(state: Data<&AppState>, Path(id): Path<Uuid>) -> poem::Result<impl IntoResponse> {
     let conn = &state.conn;
 
     let member: member::Model = QueryCore::find_member_by_id(conn, id)
@@ -78,7 +79,7 @@ pub async fn edit(state: Data<&AppState>, Path(id): Path<i32>) -> poem::Result<i
 #[handler]
 pub async fn update(
     state: Data<&AppState>,
-    Path(id): Path<i32>,
+    Path(id): Path<Uuid>,
     form: Form<member::Model>,
 ) -> poem::Result<impl IntoResponse> {
     let conn = &state.conn;
@@ -101,7 +102,7 @@ pub async fn update(
 #[handler]
 pub async fn destroy(
     state: Data<&AppState>,
-    Path(id): Path<i32>,
+    Path(id): Path<Uuid>,
 ) -> poem::Result<impl IntoResponse> {
     let conn = &state.conn;
 

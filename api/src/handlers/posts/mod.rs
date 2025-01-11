@@ -4,6 +4,7 @@ use poem::error::InternalServerError;
 use poem::http::StatusCode;
 use poem::web::{Data, Form, Html, Path, Query};
 use poem::{get, handler, Error, IntoResponse, Route};
+use sea_orm::prelude::Uuid;
 use service::{Mutation as MutationCore, Query as QueryCore};
 
 #[handler]
@@ -55,7 +56,7 @@ pub async fn new(state: Data<&AppState>) -> poem::Result<impl IntoResponse> {
 }
 
 #[handler]
-pub async fn edit(state: Data<&AppState>, Path(id): Path<i32>) -> poem::Result<impl IntoResponse> {
+pub async fn edit(state: Data<&AppState>, Path(id): Path<Uuid>) -> poem::Result<impl IntoResponse> {
     let conn = &state.conn;
 
     let post: post::Model = QueryCore::find_post_by_id(conn, id)
@@ -76,7 +77,7 @@ pub async fn edit(state: Data<&AppState>, Path(id): Path<i32>) -> poem::Result<i
 #[handler]
 pub async fn update(
     state: Data<&AppState>,
-    Path(id): Path<i32>,
+    Path(id): Path<Uuid>,
     form: Form<post::Model>,
 ) -> poem::Result<impl IntoResponse> {
     let conn = &state.conn;
@@ -99,7 +100,7 @@ pub async fn update(
 #[handler]
 pub async fn destroy(
     state: Data<&AppState>,
-    Path(id): Path<i32>,
+    Path(id): Path<Uuid>,
 ) -> poem::Result<impl IntoResponse> {
     let conn = &state.conn;
 
@@ -110,7 +111,6 @@ pub async fn destroy(
     Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/posts"))
 }
 
-// A function to define all routes related to posts
 pub fn routes() -> Route {
     Route::new()
         .at("/", get(list).post(create))
