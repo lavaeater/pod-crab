@@ -8,12 +8,10 @@ use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, EntityTrait};
 use serde::Deserialize;
 use std::env;
 use std::str::FromStr;
-use openidconnect::Nonce;
 use poem::session::{CookieConfig, CookieSession};
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::Uuid;
 use tera::Tera;
-use entities::prelude::User;
 use entities::user;
 
 mod handlers;
@@ -29,8 +27,7 @@ struct AppState {
 
 #[derive(Debug, Clone)]
 struct OpenIdData {
-    google_client: GoogleClient,
-    nonce: Option<Nonce>,
+    google_client: GoogleClient
 }
 
 #[derive(Deserialize, Default)]
@@ -63,8 +60,7 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     let google_client = setup_openid_client().await.unwrap();
     let state = AppState { templates, conn };
     let open_id_data = OpenIdData {
-        google_client,
-        nonce: None,
+        google_client
     };
 
     println!("Starting server at {server_url}");

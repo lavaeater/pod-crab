@@ -51,7 +51,7 @@ impl Query {
         email: &str,
     ) -> Result<Option<user::Model>, DbErr> {
         User::find()
-            .filter(user::Column::Email.eq(email))
+            .filter(user::Column::Email.contains(email))
             .one(db)
             .await
     }

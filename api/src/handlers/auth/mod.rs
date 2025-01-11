@@ -28,8 +28,8 @@ use std::env;
 use std::process::exit;
 use std::string::ToString;
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, NotSet};
-use entities::user;
+use sea_orm::{ActiveModelTrait, DbErr, NotSet};
+use entities::user::{Model as User, ActiveModel as UserActiveModel};
 use crate::{AppState, OpenIdData};
 
 use service::Query as QueryCore;
@@ -62,7 +62,7 @@ pub async fn auth_middleware<E: Endpoint>(next: E, req: Request) -> Result<Respo
 
     if let Some(session) = session {
         // Check if user is logged in
-        if session.get::<String>("user_id").is_some() {
+        if session.get::<User>("current_user").is_some() {
             // User is logged in, proceed to the endpoint
             return match next.call(req).await {
                 Ok(res) => Ok(res.into_response()),
@@ -182,7 +182,7 @@ fn get_http_client() -> reqwest::Client {
 }
 
 #[handler]
-async fn login(session: &Session, auth_client: Data<&mut OpenIdData>) -> Result<impl IntoResponse> {
+async fn login(session: &Session, auth_client: Data<&OpenIdData>) -> Result<impl IntoResponse> {
     let (authorize_url, _csrf_state, nonce) = auth_client
         .google_client
         .authorize_url(
@@ -193,7 +193,7 @@ async fn login(session: &Session, auth_client: Data<&mut OpenIdData>) -> Result<
         .add_scope(Scope::new("email".to_string()))
         .url();
     
-    auth_client.nonce = Some(nonce);
+    session.set(NONCE_KEY, nonce);
     
     // Access-Control-Allow-Origin
     Ok(StatusCode::FOUND
@@ -203,7 +203,7 @@ async fn login(session: &Session, auth_client: Data<&mut OpenIdData>) -> Result<
 
 #[handler]
 async fn auth_callback(
-    auth_client: Data<&GoogleClient>,
+    open_id_data: Data<&OpenIdData>,
     app_state: Data<&AppState>,
     query: poem::web::Query<HashMap<String, String>>,
     session: &Session,
@@ -211,6 +211,7 @@ async fn auth_callback(
     let code = query.get("code");
     if let Some(code) = code {
         let http_client = get_http_client();
+        let auth_client = &open_id_data.google_client;
 
         let token_response = auth_client
             .exchange_code(AuthorizationCode::new(code.to_string()))
@@ -222,8 +223,7 @@ async fn auth_callback(
                 unreachable!();
             });
         
-        let nonce = session.get::<String>(NONCE_KEY).unwrap_or_default();
-        let nonce = Nonce(nonce);
+        let nonce = session.get::<Nonce>(NONCE_KEY).unwrap();
 
         let id_token_verifier: CoreIdTokenVerifier = auth_client.id_token_verifier();
         let id_token_claims: &CoreIdTokenClaims = token_response
@@ -239,30 +239,34 @@ async fn auth_callback(
                 unreachable!();
             });
         if let Some(email) = id_token_claims.email() {
-            if let Ok(Some(user)) = QueryCore::find_user_by_email(&app_state.conn, email)
-                .await
-            {
-                session.set("user_id", user.id.to_string());
-                session.set("role", user.role.to_string());
-            } else {
-                let u = user::ActiveModel {
-                    id: NotSet,
-                    email: Set(email.to_string()),
-                    name: Set("".to_string()),
-                    role: NotSet,
-                }
-                .insert(&app_state.conn)
+            let boffo = QueryCore::find_user_by_email(&app_state.conn, email.as_str())
                 .await;
-                if let Ok(u) = u {
-                    session.set("user_id", u.id.to_string());
-                    session.set("role", u.role.to_string());
-                }
-            }
             
-            session.set("email", email.to_string());
+            match boffo {
+                Ok(Some(user)) => {
+                    session.set("current_user", user);
+                }
+                Err(err) => {
+                    eprintln!("Error: {:?}", err);
+                    return Err(NotFoundError.into());
+                },
+                Ok(None) => {
+                    let u = UserActiveModel {
+                        id: NotSet,
+                        email: Set(email.to_string()),
+                        name: Set("".to_string()),
+                        role: NotSet,
+                    }
+                        .insert(&app_state.conn)
+                        .await;
+                    if let Ok(u) = u {
+                        session.set("current_user", u);
+                    }
+                }
+            }            
         }
 
-        return Ok(Redirect::temporary("/".to_string()));
+        return Ok(Redirect::temporary(session.get(REDIRECT_AFTER_LOGIN).unwrap_or("/".to_string())));
     }
     Err(NotFoundError.into())
 }
