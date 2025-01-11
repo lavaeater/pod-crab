@@ -27,6 +27,10 @@ use poem::{get, handler, Endpoint, IntoResponse, Request, Response, Result, Rout
 use std::env;
 use std::process::exit;
 use std::string::ToString;
+use entities::user;
+use crate::AppState;
+
+use service::Query as QueryCore;
 
 // Teach openidconnect-rs about a Google custom extension to the OpenID Discovery response that we can use as the RFC
 // 7009 OAuth 2.0 Token Revocation endpoint. For more information about the Google specific Discovery response see the
@@ -66,7 +70,7 @@ pub async fn auth_middleware<E: Endpoint>(next: E, req: Request) -> Result<Respo
                 }
             };
         } else {
-            session.set(&REDIRECT_AFTER_LOGIN, req.uri().path().to_string());
+            session.set(REDIRECT_AFTER_LOGIN, req.uri().path().to_string());
         }
     }
 
@@ -76,8 +80,8 @@ pub async fn auth_middleware<E: Endpoint>(next: E, req: Request) -> Result<Respo
         .finish())
 }
 
-const REDIRECT_AFTER_LOGIN: String = "redirect_after_login".to_string(); 
-const NONCE_KEY: String = "nonce".to_string();
+const REDIRECT_AFTER_LOGIN: &str = "redirect_after_login"; 
+const NONCE_KEY: &str = "nonce";
 pub type GoogleClient = Client<
     EmptyAdditionalClaims,
     CoreAuthDisplay,
@@ -187,7 +191,7 @@ async fn login(session: &Session, auth_client: Data<&GoogleClient>) -> Result<im
         .add_scope(Scope::new("email".to_string()))
         .url();
     
-        session.set(&NONCE_KEY, nonce.secret().to_string());
+        session.set(NONCE_KEY, nonce.secret().to_string());
     
     // Access-Control-Allow-Origin
     Ok(StatusCode::FOUND
@@ -198,6 +202,7 @@ async fn login(session: &Session, auth_client: Data<&GoogleClient>) -> Result<im
 #[handler]
 async fn auth_callback(
     auth_client: Data<&GoogleClient>,
+    app_state: Data<&AppState>,
     query: poem::web::Query<HashMap<String, String>>,
     session: &Session,
 ) -> Result<Redirect> {
@@ -214,6 +219,9 @@ async fn auth_callback(
                 handle_error(&err, "Failed to exchange code for token");
                 unreachable!();
             });
+        
+        let nonce = session.get::<String>(NONCE_KEY).unwrap_or_default();
+        let nonce = Nonce::new(nonce);
 
         let id_token_verifier: CoreIdTokenVerifier = auth_client.id_token_verifier();
         let id_token_claims: &CoreIdTokenClaims = token_response
@@ -222,13 +230,26 @@ async fn auth_callback(
             .expect("Server did not return an ID token")
             .claims(
                 &id_token_verifier,
-                &Nonce::new("expected_nonce".to_string()),
+                &nonce,
             )
             .unwrap_or_else(|err| {
                 handle_error(&err, "Failed to verify ID token");
                 unreachable!();
             });
         if let Some(email) = id_token_claims.email() {
+            if let Ok(Some(user)) = QueryCore::find_user_by_email(&app_state.conn, email)
+                .await
+            {
+                session.set("user_id", user.id.to_string());
+            } else {
+                let _u = user::ActiveModel {
+                    email: Set(email.to_string()),
+                    name: Set(id_token_claims.name().unwrap_or_default().to_string()),
+                }
+                .insert(&app_state.conn)
+                .await;
+            }
+            
             session.set("email", email.to_string());
         }
 

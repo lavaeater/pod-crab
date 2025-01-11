@@ -54,7 +54,7 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     
     let templates = Tera::new(&format!("{}/templates/**/*", &root_path)).unwrap();
     let google_client = setup_openid_client().await.unwrap();
-    let state = AppState { templates, conn};
+    let state = AppState { templates, conn };
 
     println!("Starting server at {server_url}");
     let app = Route::new()
@@ -79,11 +79,11 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
 
 async fn ensure_super_admin(database_connection: &DatabaseConnection) {
     let user_id = Uuid::from_str("920b2fc5-d127-4003-b3f9-43bb685558d4").unwrap();
-    if let Ok(Some(user)) = user::Entity::find_by_id(&user_id).one(database_connection).await {
+    if let Ok(Some(_user)) = user::Entity::find_by_id(user_id.clone()).one(database_connection).await {
         return;
     }
     
-    let u = user::ActiveModel {
+    let _u = user::ActiveModel {
         id: Set(user_id),
         email: Set("tommie.nygren@gmail.com".to_string()),
         name: Set("Tommie Nygren".to_string()),

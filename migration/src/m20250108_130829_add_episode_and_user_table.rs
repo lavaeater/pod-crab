@@ -30,6 +30,7 @@ impl MigrationTrait for Migration {
                     .col(string(Episode::Title))
                     .col(string(Episode::Summary))
                     .col(string(Episode::Tags))
+                    .col(string(Episode::Tags))
                     .col(string_null(Episode::Url))
                     .to_owned(),
                 Episode::Table,
@@ -83,6 +84,7 @@ enum User {
     Id,
     Email,
     Name,
+    Role,
 }
 
 impl Display for User {
@@ -92,6 +94,7 @@ impl Display for User {
             User::Id => write!(f, "user_id"),
             User::Name => write!(f, "user_name"),
             User::Email => write!(f, "user_email"),
+            User::Role => write!(f, "user_role"),
         }
     }
 }

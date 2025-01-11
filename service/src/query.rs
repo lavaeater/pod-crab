@@ -1,9 +1,8 @@
 use sea_orm::*;
 use sea_orm::prelude::Uuid;
-use entities::{member, member::Entity as Member};
+use entities::{member, member::Entity as Member, user};
 use entities::{post, post::Entity as Post};
-
-
+use entities::prelude::User;
 
 pub struct Query;
 
@@ -45,5 +44,15 @@ impl Query {
 
         // Fetch paginated posts
         paginator.fetch_page(page - 1).await.map(|p| (p, num_pages))
+    }
+    
+    pub async fn find_user_by_email(
+        db: &DbConn,
+        email: &str,
+    ) -> Result<Option<user::Model>, DbErr> {
+        User::find()
+            .filter(user::Column::Email.eq(email))
+            .one(db)
+            .await
     }
 }
