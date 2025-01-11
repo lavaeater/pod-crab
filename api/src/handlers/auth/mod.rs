@@ -28,7 +28,7 @@ use std::env;
 use std::process::exit;
 use std::string::ToString;
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, DbErr, NotSet};
+use sea_orm::{ActiveModelTrait, NotSet};
 use entities::user::{Model as User, ActiveModel as UserActiveModel};
 use crate::{AppState, OpenIdData};
 
@@ -72,7 +72,7 @@ pub async fn auth_middleware<E: Endpoint>(next: E, req: Request) -> Result<Respo
                 }
             };
         } else {
-            session.set(REDIRECT_AFTER_LOGIN, req.uri().path().to_string());
+            session.set(REDIRECT_AFTER_LOGIN_KEY, req.uri().path().to_string());
         }
     }
 
@@ -82,7 +82,7 @@ pub async fn auth_middleware<E: Endpoint>(next: E, req: Request) -> Result<Respo
         .finish())
 }
 
-const REDIRECT_AFTER_LOGIN: &str = "redirect_after_login"; 
+const REDIRECT_AFTER_LOGIN_KEY: &str = "redirect_after_login"; 
 const NONCE_KEY: &str = "nonce";
 pub type GoogleClient = Client<
     EmptyAdditionalClaims,
@@ -265,8 +265,11 @@ async fn auth_callback(
                 }
             }            
         }
-
-        return Ok(Redirect::temporary(session.get(REDIRECT_AFTER_LOGIN).unwrap_or("/".to_string())));
+        session.remove(NONCE_KEY);
+        let redirect_after_login = session.get(REDIRECT_AFTER_LOGIN_KEY).unwrap_or("/".to_string());
+        session.remove(REDIRECT_AFTER_LOGIN_KEY);
+        
+        return Ok(Redirect::temporary(redirect_after_login));
     }
     Err(NotFoundError.into())
 }
