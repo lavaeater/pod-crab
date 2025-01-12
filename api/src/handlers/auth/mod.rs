@@ -30,7 +30,7 @@ use std::string::ToString;
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, NotSet};
 use entities::user::{Model as User, ActiveModel as UserActiveModel};
-use crate::{AppState, OpenIdData};
+use crate::{AppState};
 
 use service::Query as QueryCore;
 
@@ -182,9 +182,9 @@ fn get_http_client() -> reqwest::Client {
 }
 
 #[handler]
-async fn login(session: &Session, auth_client: Data<&OpenIdData>) -> Result<impl IntoResponse> {
+async fn login(session: &Session, auth_client: Data<&GoogleClient>) -> Result<impl IntoResponse> {
     let (authorize_url, _csrf_state, nonce) = auth_client
-        .google_client
+        .0
         .authorize_url(
             AuthenticationFlow::<CoreResponseType>::AuthorizationCode,
             CsrfToken::new_random,
@@ -203,7 +203,7 @@ async fn login(session: &Session, auth_client: Data<&OpenIdData>) -> Result<impl
 
 #[handler]
 async fn auth_callback(
-    open_id_data: Data<&OpenIdData>,
+    open_id_data: Data<&GoogleClient>,
     app_state: Data<&AppState>,
     query: poem::web::Query<HashMap<String, String>>,
     session: &Session,
@@ -211,7 +211,7 @@ async fn auth_callback(
     let code = query.get("code");
     if let Some(code) = code {
         let http_client = get_http_client();
-        let auth_client = &open_id_data.google_client;
+        let auth_client = &open_id_data.0;
 
         let token_response = auth_client
             .exchange_code(AuthorizationCode::new(code.to_string()))
@@ -265,12 +265,15 @@ async fn auth_callback(
                 }
             }            
         }
-        session.remove(NONCE_KEY);
+        
         let redirect_after_login = session.get(REDIRECT_AFTER_LOGIN_KEY).unwrap_or("/".to_string());
         session.remove(REDIRECT_AFTER_LOGIN_KEY);
+        session.remove(NONCE_KEY);
         
         return Ok(Redirect::temporary(redirect_after_login));
     }
+    session.remove(REDIRECT_AFTER_LOGIN_KEY);
+    session.remove(NONCE_KEY);
     Err(NotFoundError.into())
 }
 

@@ -1,4 +1,4 @@
-use crate::handlers::auth::{auth_middleware, setup_openid_client, GoogleClient};
+use crate::handlers::auth::{auth_middleware, setup_openid_client};
 use crate::handlers::{auth, index, members, posts};
 use migration::{Migrator, MigratorTrait};
 use poem::endpoint::StaticFilesEndpoint;
@@ -23,11 +23,6 @@ const DEFAULT_ITEMS_PER_PAGE: u64 = 5;
 struct AppState {
     templates: Tera,
     conn: DatabaseConnection
-}
-
-#[derive(Debug, Clone)]
-struct OpenIdData {
-    google_client: GoogleClient
 }
 
 #[derive(Deserialize, Default)]
@@ -59,9 +54,6 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     let templates = Tera::new(&format!("{}/templates/**/*", &root_path)).unwrap();
     let google_client = setup_openid_client().await.unwrap();
     let state = AppState { templates, conn };
-    let open_id_data = OpenIdData {
-        google_client
-    };
 
     println!("Starting server at {server_url}");
     let app = Route::new()
@@ -77,9 +69,9 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
             "/dist",
             StaticFilesEndpoint::new(format!("{}/dist", &root_path)),
         )
-        .with(CookieSession::new(CookieConfig::default())) //.secure(true)
+        .with(CookieSession::new(CookieConfig::default().secure(false)))
         .data(state)
-        .data(open_id_data);
+        .data(google_client);
     let server = Server::new(TcpListener::bind(format!("{host}:{port}")));
     server.run(app).await
 }
