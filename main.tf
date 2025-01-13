@@ -8,7 +8,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.83.1"
+      version = "~> 4.16"
     }
   }
 
@@ -25,7 +25,7 @@ resource "aws_s3_bucket" "episode-storage" {
   force_destroy = true
 }
 
-# resource "aws_instance" "pod-crab-server" {
+# resource "aws_instance" "app_server" {
 #   ami           = "ami-01f5f2e96f603b15b"
 #   instance_type = "t2.micro"
 # 

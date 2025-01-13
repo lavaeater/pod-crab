@@ -71,31 +71,12 @@ async fn get_object(
 async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt::init();
 
-    let Opt {
-        region,
-        bucket,
-        object,
-        expires_in,
-        verbose,
-    } = Opt::parse();
+    // let region_provider = RegionProviderChain::first_try(region.map(Region::new))
+    //     .or_default_provider()
+    //     .or_else(Region::new("us-west-2"));
+    //
+    // let shared_config = aws_config::from_env().region(region_provider).load().await;
+    // let client = Client::new(&shared_config);
 
-    let region_provider = RegionProviderChain::first_try(region.map(Region::new))
-        .or_default_provider()
-        .or_else(Region::new("us-west-2"));
-
-    let shared_config = aws_config::from_env().region(region_provider).load().await;
-    let client = Client::new(&shared_config);
-
-    println!();
-
-    if verbose {
-        println!("S3 client version: {}", PKG_VERSION);
-        println!("Region:            {}", shared_config.region().unwrap());
-        println!("Bucket:            {}", &bucket);
-        println!("Object:            {}", &object);
-        println!("Expires in:        {} seconds", expires_in.unwrap_or(900));
-        println!();
-    }
-
-    get_object(&client, &bucket, &object, expires_in.unwrap_or(900)).await
+    // get_object(&client, &bucket, &object, expires_in.unwrap_or(900)).await
 }
