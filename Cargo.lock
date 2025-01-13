@@ -209,7 +209,6 @@ dependencies = [
  "aws-config",
  "aws-sdk-s3",
  "chrono",
- "clap",
  "dotenvy",
  "entities",
  "env_logger",

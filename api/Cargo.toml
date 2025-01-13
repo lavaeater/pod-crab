@@ -29,5 +29,4 @@ anyhow = "1.0.95"
 oauth2 = "5.0.0-rc.1"
 aws-config = { version = "1.1.7", features = ["behavior-version-latest"] }
 aws-sdk-s3 = "1.68.0"
-clap = { version = "4.5.23", features = ["derive"] }
 chrono = "0.4.38"

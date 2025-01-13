@@ -3,13 +3,12 @@
 
 #![allow(clippy::result_large_err)]
 
-use aws_config::meta::region::RegionProviderChain;
 use aws_sdk_s3::presigning::PresigningConfig;
-use aws_sdk_s3::{config::Region, meta::PKG_VERSION, Client};
+use aws_sdk_s3::Client;
 use std::error::Error;
 use std::time::Duration;
 
-#[derive(Debug, Parser)]
+#[derive(Debug)]
 struct Opt {
     /// The AWS Region.
     #[structopt(short, long)]
