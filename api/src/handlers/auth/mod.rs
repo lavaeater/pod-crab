@@ -25,7 +25,6 @@ use poem::session::Session;
 use poem::web::{Data, Redirect};
 use poem::{get, handler, Endpoint, IntoResponse, Request, Response, Result, Route};
 use std::env;
-use std::process::exit;
 use std::string::ToString;
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, NotSet};
@@ -264,7 +263,7 @@ async fn auth_callback(
                     }
                 }
 
-                return Ok(Redirect::temporary(session.get(REDIRECT_AFTER_LOGIN).unwrap_or("/".to_string())));
+                return Ok(Redirect::temporary(session.get(REDIRECT_AFTER_LOGIN_KEY).unwrap_or("/".to_string())));
             }
             Err(err) => {
                 println!("Failed to verify ID token: {}", &err);
