@@ -1,6 +1,6 @@
 use openidconnect::core::{
     CoreAuthDisplay, CoreAuthPrompt, CoreClaimName, CoreClaimType, CoreClient,
-    CoreClientAuthMethod, CoreGenderClaim, CoreGrantType, CoreIdTokenClaims, CoreIdTokenVerifier,
+    CoreClientAuthMethod, CoreGenderClaim, CoreGrantType, CoreIdTokenVerifier,
     CoreJsonWebKey, CoreJweContentEncryptionAlgorithm, CoreJweKeyManagementAlgorithm,
     CoreResponseMode, CoreResponseType, CoreSubjectIdentifierType, CoreTokenIntrospectionResponse,
     CoreTokenResponse,
@@ -30,7 +30,7 @@ use std::string::ToString;
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, NotSet};
 use entities::user::{Model as User, ActiveModel as UserActiveModel};
-use crate::{AppState, OpenIdData};
+use crate::AppState;
 
 use service::Query as QueryCore;
 
@@ -182,9 +182,9 @@ fn get_http_client() -> reqwest::Client {
 }
 
 #[handler]
-async fn login(session: &Session, auth_client: Data<&OpenIdData>) -> Result<impl IntoResponse> {
+async fn login(session: &Session, auth_client: Data<&GoogleClient>) -> Result<impl IntoResponse> {
     let (authorize_url, _csrf_state, nonce) = auth_client
-        .google_client
+        .0
         .authorize_url(
             AuthenticationFlow::<CoreResponseType>::AuthorizationCode,
             CsrfToken::new_random,
@@ -203,7 +203,7 @@ async fn login(session: &Session, auth_client: Data<&OpenIdData>) -> Result<impl
 
 #[handler]
 async fn auth_callback(
-    open_id_data: Data<&OpenIdData>,
+    auth_client: Data<&GoogleClient>,
     app_state: Data<&AppState>,
     query: poem::web::Query<HashMap<String, String>>,
     session: &Session,
@@ -211,9 +211,9 @@ async fn auth_callback(
     let code = query.get("code");
     if let Some(code) = code {
         let http_client = get_http_client();
-        let auth_client = &open_id_data.google_client;
 
         let token_response = auth_client
+            .0
             .exchange_code(AuthorizationCode::new(code.to_string()))
             .unwrap()
             .request_async(&http_client)
@@ -226,50 +226,49 @@ async fn auth_callback(
         let nonce = session.get::<Nonce>(NONCE_KEY).unwrap();
 
         let id_token_verifier: CoreIdTokenVerifier = auth_client.id_token_verifier();
-        let id_token_claims: &CoreIdTokenClaims = token_response
+        match token_response
             .extra_fields()
             .id_token()
             .expect("Server did not return an ID token")
             .claims(
                 &id_token_verifier,
                 &nonce,
-            )
-            .unwrap_or_else(|err| {
-                handle_error(&err, "Failed to verify ID token");
-                unreachable!();
-            });
-        if let Some(email) = id_token_claims.email() {
-            let boffo = QueryCore::find_user_by_email(&app_state.conn, email.as_str())
-                .await;
-            
-            match boffo {
-                Ok(Some(user)) => {
-                    session.set("current_user", user);
-                }
-                Err(err) => {
-                    eprintln!("Error: {:?}", err);
-                    return Err(NotFoundError.into());
-                },
-                Ok(None) => {
-                    let u = UserActiveModel {
-                        id: NotSet,
-                        email: Set(email.to_string()),
-                        name: Set("".to_string()),
-                        role: NotSet,
-                    }
-                        .insert(&app_state.conn)
+            ) {
+            Ok(id_token_claims) => {
+                if let Some(email) = id_token_claims.email() {
+                    let boffo = QueryCore::find_user_by_email(&app_state.conn, email.as_str())
                         .await;
-                    if let Ok(u) = u {
-                        session.set("current_user", u);
+
+                    match boffo {
+                        Ok(Some(user)) => {
+                            session.set("current_user", user);
+                        }
+                        Err(err) => {
+                            eprintln!("Error: {:?}", err);
+                            return Err(NotFoundError.into());
+                        },
+                        Ok(None) => {
+                            let u = UserActiveModel {
+                                id: NotSet,
+                                email: Set(email.to_string()),
+                                name: Set("".to_string()),
+                                role: NotSet,
+                            }
+                                .insert(&app_state.conn)
+                                .await;
+                            if let Ok(u) = u {
+                                session.set("current_user", u);
+                            }
+                        }
                     }
                 }
-            }            
-        }
-        session.remove(NONCE_KEY);
-        let redirect_after_login = session.get(REDIRECT_AFTER_LOGIN_KEY).unwrap_or("/".to_string());
-        session.remove(REDIRECT_AFTER_LOGIN_KEY);
-        
-        return Ok(Redirect::temporary(redirect_after_login));
+
+                return Ok(Redirect::temporary(session.get(REDIRECT_AFTER_LOGIN).unwrap_or("/".to_string())));
+            }
+            Err(err) => {
+                println!("Failed to verify ID token: {}", &err);
+            }
+        } 
     }
     Err(NotFoundError.into())
 }
