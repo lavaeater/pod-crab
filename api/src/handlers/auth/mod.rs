@@ -129,6 +129,8 @@ pub async fn setup_openid_client() -> anyhow::Result<GoogleClient> {
             unreachable!();
         });
 
+    let auth_redirect_url = env::var("GOOGLE_REDIRECT_URI").unwrap_or_else(|_| "http://127.0.0.1:8000/auth/callback".to_string());
+    
     let http_client = get_http_client();
 
     let provider_metadata = GoogleProviderMetadata::discover_async(issuer_url, &http_client)
@@ -156,7 +158,7 @@ pub async fn setup_openid_client() -> anyhow::Result<GoogleClient> {
     // This example will be running its own server at localhost:8080.
     // See below for the server implementation.
     .set_redirect_uri(
-        RedirectUrl::new("http://localhost:8000/auth/callback".to_string()).unwrap_or_else(|err| {
+        RedirectUrl::new(auth_redirect_url).unwrap_or_else(|err| {
             handle_error(&err, "Invalid redirect URL");
             unreachable!();
         }),
