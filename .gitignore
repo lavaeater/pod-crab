@@ -23,3 +23,5 @@ node_modules/
 dist/
 
 .env
+.terraform.lock.hcl
+.terraform
