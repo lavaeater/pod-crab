@@ -17,6 +17,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::AppState;
+use entities::user::ActiveModel as UserActiveModel;
 use oauth2::basic::{BasicErrorResponseType, BasicRevocationErrorResponse};
 use oauth2::{
     AuthorizationCode, CsrfToken, EndpointMaybeSet, EndpointNotSet, EndpointSet, Scope,
@@ -26,13 +28,11 @@ use poem::error::NotFoundError;
 use poem::http::StatusCode;
 use poem::session::Session;
 use poem::web::{Data, Redirect};
-use poem::{get, handler, Endpoint, IntoResponse, Middleware, Request, Response, Result, Route};
-use std::env;
-use std::string::ToString;
+use poem::{get, handler, IntoResponse, Result, Route};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, NotSet};
-use entities::user::{Model as User, ActiveModel as UserActiveModel};
-use crate::AppState;
+use std::env;
+use std::string::ToString;
 
 use service::Query as QueryCore;
 

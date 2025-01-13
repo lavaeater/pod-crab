@@ -1,4 +1,4 @@
-use crate::handlers::auth::{auth_middleware, setup_openid_client};
+use crate::handlers::auth::{setup_openid_client};
 use crate::handlers::{auth, index, members, posts};
 use migration::{Migrator, MigratorTrait};
 use poem::endpoint::StaticFilesEndpoint;

@@ -33,7 +33,7 @@ pub struct RequiredRoleMiddlewareImpl<E> {
 impl<E: Endpoint> Endpoint for RequiredRoleMiddlewareImpl<E> {
     type Output = Response;
 
-    async fn call(&self, mut req: Request) -> Result<Self::Output> {
+    async fn call(&self, req: Request) -> Result<Self::Output> {
         let session = req.extensions().get::<Session>();
 
         if let Some(session) = session {
