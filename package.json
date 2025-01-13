@@ -21,6 +21,7 @@
   "dependencies": {
     "@tailwindcss/typography": "^0.5.15",
     "alpinejs": "^3.14.5",
+    "aws-sdk": "^2.1692.0",
     "daisyui": "^4.12.14",
     "htmx.org": "^2.0.3"
   }
