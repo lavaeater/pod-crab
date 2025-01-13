@@ -206,6 +206,10 @@ name = "api"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "aws-config",
+ "aws-sdk-s3",
+ "chrono",
+ "clap",
  "dotenvy",
  "entities",
  "env_logger",
