@@ -1,10 +1,18 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-#![allow(clippy::result_large_err)]
-
+use crate::handlers::auth::login_required_middleware::login_required_middleware;
+use crate::handlers::auth::required_role_middleware::RequiredRoleMiddleware;
+use crate::{AppState, PaginationParams, DEFAULT_ITEMS_PER_PAGE};
 use aws_sdk_s3::presigning::PresigningConfig;
 use aws_sdk_s3::Client;
+use entities::episode::Model as Episode;
+use oauth2::http::StatusCode;
+use poem::error::InternalServerError;
+use poem::web::{Data, Form, Html, Path, Query};
+use poem::{get, handler, post, IntoResponse, Route};
+use sea_orm::prelude::Uuid;
+use service::{Mutation as MutationCore, Query as QueryCore};
 use std::error::Error;
 use std::time::Duration;
 
@@ -31,8 +39,6 @@ struct Opt {
     verbose: bool,
 }
 
-// snippet-start:[s3.rust.get-object-presigned]
-/// Generate a URL for a presigned GET request.
 async fn get_object(
     client: &Client,
     bucket: &str,
@@ -53,20 +59,7 @@ async fn get_object(
 
     Ok(())
 }
-// snippet-end:[s3.rust.get-object-presigned]
 
-/// Gets an S3 object using a presigned request.
-/// # Arguments
-///
-/// * `-b BUCKET` - The bucket containing the object to retrieve.
-/// * `-o OBJECT` - The object to retrieve.
-/// * `[-e EXPIRES-IN]` - How long, in seconds, to wait for the request to return.
-///   The default is 900 (15 minutes).
-/// * `[-r REGION]` - The Region in which the client is created.
-///   If not supplied, uses the value of the **AWS_REGION** environment variable.
-///   If the environment variable is not set, defaults to **us-west-2**.
-/// * `[-v]` - Whether to display additional information.
-#[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt::init();
 
@@ -78,4 +71,131 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // let client = Client::new(&shared_config);
 
     // get_object(&client, &bucket, &object, expires_in.unwrap_or(900)).await
+}
+
+#[handler]
+pub async fn create(
+    state: Data<&AppState>,
+    form: Form<Episode>,
+) -> poem::Result<impl IntoResponse> {
+    let form = form.0;
+    let conn = &state.conn;
+
+    MutationCore::create_episode(conn, form)
+        .await
+        .map_err(InternalServerError)?;
+
+    Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/posts"))
+}
+
+#[handler]
+pub async fn list(
+    state: Data<&AppState>,
+    Query(params): Query<PaginationParams>,
+) -> poem::Result<impl IntoResponse> {
+    let conn = &state.conn;
+    let page = params.page.unwrap_or(1);
+    let items_per_page = params.items_per_page.unwrap_or(DEFAULT_ITEMS_PER_PAGE);
+
+    let (episodes, num_pages) = QueryCore::find_episodes(conn, page, items_per_page)
+        .await
+        .map_err(InternalServerError)?;
+
+    let mut ctx = tera::Context::new();
+    ctx.insert("episodes", &episodes);
+    ctx.insert("page", &page);
+    ctx.insert("items_per_page", &items_per_page);
+    ctx.insert("num_pages", &num_pages);
+
+    let body = state
+        .templates
+        .render("episodes/list.html.tera", &ctx)
+        .map_err(InternalServerError)?;
+    Ok(Html(body))
+}
+
+#[handler]
+pub async fn new(state: Data<&AppState>) -> poem::Result<impl IntoResponse> {
+    let ctx = tera::Context::new();
+    let body = state
+        .templates
+        .render("episodes/new.html.tera", &ctx)
+        .map_err(InternalServerError)?;
+    Ok(Html(body))
+}
+
+#[handler]
+pub async fn edit(state: Data<&AppState>, Path(id): Path<Uuid>) -> poem::Result<impl IntoResponse> {
+    let conn = &state.conn;
+
+    let post: post::Model = QueryCore::find_post_by_id(conn, id)
+        .await
+        .map_err(InternalServerError)?
+        .ok_or_else(|| poem::Error::from_status(StatusCode::NOT_FOUND))?;
+
+    let mut ctx = tera::Context::new();
+    ctx.insert("post", &post);
+
+    let body = state
+        .templates
+        .render("posts/edit.html.tera", &ctx)
+        .map_err(InternalServerError)?;
+    Ok(Html(body))
+}
+
+#[handler]
+pub async fn update(
+    state: Data<&AppState>,
+    Path(id): Path<Uuid>,
+    form: Form<post::Model>,
+) -> poem::Result<impl IntoResponse> {
+    let conn = &state.conn;
+    let form = form.0;
+
+    let post = MutationCore::update_post_by_id(conn, id, form)
+        .await
+        .map_err(InternalServerError)?;
+
+    let mut ctx = tera::Context::new();
+    ctx.insert("post", &post);
+
+    let body = state
+        .templates
+        .render("posts/post_row.html.tera", &ctx)
+        .map_err(InternalServerError)?;
+    Ok(Html(body))
+}
+
+#[handler]
+pub async fn destroy(
+    state: Data<&AppState>,
+    Path(id): Path<Uuid>,
+) -> poem::Result<impl IntoResponse> {
+    let conn = &state.conn;
+
+    MutationCore::delete_post(conn, id)
+        .await
+        .map_err(InternalServerError)?;
+
+    Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/posts"))
+}
+
+pub fn post_routes() -> Route {
+    Route::new()
+        .at("/", get(list).around(login_required_middleware))
+        .at(
+            "/create",
+            post(create).with(RequiredRoleMiddleware::new("super_admin")),
+        )
+        .at(
+            "/new",
+            get(new).with(RequiredRoleMiddleware::new("super_admin")),
+        )
+        .at(
+            "/:id",
+            get(edit)
+                .patch(update)
+                .delete(destroy)
+                .with(RequiredRoleMiddleware::new("super_admin")),
+        )
 }
