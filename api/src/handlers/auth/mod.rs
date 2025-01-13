@@ -112,7 +112,6 @@ fn handle_error<T: std::error::Error>(fail: &T, msg: &'static str) {
         cur_fail = cause.source();
     }
     println!("{}", err_msg);
-    exit(1);
 }
 
 pub async fn setup_openid_client() -> anyhow::Result<GoogleClient> {
