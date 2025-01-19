@@ -56,6 +56,25 @@ async fn get_object(
     Ok(())
 }
 
+async fn put_object(
+    client: &Client,
+    bucket: &str,
+    object: &str,
+    expires_in: u64,
+) -> Result<Response, Box<dyn Error>> {
+    let expires_in = Duration::from_secs(expires_in);
+    let presigned_request = client
+        .put_object()
+        .bucket(bucket)
+        .key(object)
+        .presigned(PresigningConfig::expires_in(expires_in)?)
+        .await?;
+
+    let valid_until = chrono::offset::Local::now() + expires_in;
+
+    Ok(())
+}
+
 async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt::init();
     Ok(())
