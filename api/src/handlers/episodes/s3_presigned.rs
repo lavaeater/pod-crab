@@ -7,10 +7,11 @@ use crate::{AppState, PaginationParams, DEFAULT_ITEMS_PER_PAGE};
 use aws_sdk_s3::presigning::PresigningConfig;
 use aws_sdk_s3::Client;
 use entities::episode::Model as Episode;
+use entities::post;
 use oauth2::http::StatusCode;
 use poem::error::InternalServerError;
 use poem::web::{Data, Form, Html, Path, Query};
-use poem::{get, handler, post, IntoResponse, Route};
+use poem::{get, handler, post, EndpointExt, IntoResponse, Route};
 use sea_orm::prelude::Uuid;
 use service::{Mutation as MutationCore, Query as QueryCore};
 use std::error::Error;
@@ -19,23 +20,18 @@ use std::time::Duration;
 #[derive(Debug)]
 struct Opt {
     /// The AWS Region.
-    #[structopt(short, long)]
     region: Option<String>,
 
     /// The name of the bucket.
-    #[structopt(short, long)]
     bucket: String,
 
     /// The object key.
-    #[structopt(short, long)]
     object: String,
 
     /// How long in seconds before the presigned request should expire.
-    #[structopt(short, long)]
     expires_in: Option<u64>,
 
     /// Whether to display additional information.
-    #[structopt(short, long)]
     verbose: bool,
 }
 
@@ -62,6 +58,7 @@ async fn get_object(
 
 async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt::init();
+    Ok(())
 
     // let region_provider = RegionProviderChain::first_try(region.map(Region::new))
     //     .or_default_provider()
@@ -180,7 +177,7 @@ pub async fn destroy(
     Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/posts"))
 }
 
-pub fn post_routes() -> Route {
+pub fn episode_routes() -> Route {
     Route::new()
         .at("/", get(list).around(login_required_middleware))
         .at(
