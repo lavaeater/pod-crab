@@ -1,3 +1,6 @@
+pub(crate) mod required_role_middleware;
+pub(crate) mod login_required_middleware;
+
 use openidconnect::core::{
     CoreAuthDisplay, CoreAuthPrompt, CoreClaimName, CoreClaimType, CoreClient,
     CoreClientAuthMethod, CoreGenderClaim, CoreGrantType, CoreIdTokenVerifier,
@@ -14,6 +17,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::AppState;
+use entities::user::ActiveModel as UserActiveModel;
 use oauth2::basic::{BasicErrorResponseType, BasicRevocationErrorResponse};
 use oauth2::{
     AuthorizationCode, CsrfToken, EndpointMaybeSet, EndpointNotSet, EndpointSet, Scope,
@@ -23,13 +28,11 @@ use poem::error::NotFoundError;
 use poem::http::StatusCode;
 use poem::session::Session;
 use poem::web::{Data, Redirect};
-use poem::{get, handler, Endpoint, IntoResponse, Request, Response, Result, Route};
-use std::env;
-use std::string::ToString;
+use poem::{get, handler, IntoResponse, Result, Route};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, NotSet};
-use entities::user::{Model as User, ActiveModel as UserActiveModel};
-use crate::AppState;
+use std::env;
+use std::string::ToString;
 
 use service::Query as QueryCore;
 
@@ -55,31 +58,6 @@ type GoogleProviderMetadata = ProviderMetadata<
     CoreResponseType,
     CoreSubjectIdentifierType,
 >;
-
-pub async fn auth_middleware<E: Endpoint>(next: E, req: Request) -> Result<Response> {
-    let session = req.extensions().get::<Session>();
-
-    if let Some(session) = session {
-        // Check if user is logged in
-        if session.get::<User>("current_user").is_some() {
-            // User is logged in, proceed to the endpoint
-            return match next.call(req).await {
-                Ok(res) => Ok(res.into_response()),
-                Err(err) => {
-                    eprintln!("Error: {:?}", err);
-                    Err(err)
-                }
-            };
-        } else {
-            session.set(REDIRECT_AFTER_LOGIN_KEY, req.uri().path().to_string());
-        }
-    }
-
-    Ok(Response::builder()
-        .status(StatusCode::FOUND)
-        .header("Location", "/auth/login")
-        .finish())
-}
 
 const REDIRECT_AFTER_LOGIN_KEY: &str = "redirect_after_login"; 
 const NONCE_KEY: &str = "nonce";

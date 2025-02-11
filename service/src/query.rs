@@ -1,14 +1,27 @@
-use sea_orm::*;
-use sea_orm::prelude::Uuid;
-use entities::{member, member::Entity as Member, user};
-use entities::{post, post::Entity as Post};
 use entities::prelude::User;
+use entities::{episode, episode::Entity as Episode, member, member::Entity as Member, user};
+use entities::{post, post::Entity as Post};
+use sea_orm::prelude::Uuid;
+use sea_orm::*;
 
 pub struct Query;
 
 impl Query {
     pub async fn find_member_by_id(db: &DbConn, id: Uuid) -> Result<Option<member::Model>, DbErr> {
         Member::find_by_id(id).one(db).await
+    }
+    pub async fn find_episodes(
+        db: &DatabaseConnection,
+        page: u64,
+        episodes_per_page: u64,
+    ) -> Result<(Vec<episode::Model>, u64), DbErr> {
+        let paginator = Episode::find()
+            .order_by_asc(episode::Column::Id)
+            .paginate(db, episodes_per_page);
+        let num_pages = paginator.num_pages().await?;
+
+        // Fetch paginated members
+        paginator.fetch_page(page - 1).await.map(|p| (p, num_pages))
     }
 
     /// If ok, returns (member models, num pages).
@@ -45,7 +58,7 @@ impl Query {
         // Fetch paginated posts
         paginator.fetch_page(page - 1).await.map(|p| (p, num_pages))
     }
-    
+
     pub async fn find_user_by_email(
         db: &DbConn,
         email: &str,

@@ -1,12 +1,18 @@
-use entities::{member, member::Entity as Member};
+use entities::{episode, member, member::Entity as Member};
 use entities::{post, post::Entity as Post};
 
-use sea_orm::*;
 use sea_orm::prelude::Uuid;
+use sea_orm::*;
 
 pub struct Mutation;
 
 impl Mutation {
+    pub async fn create_episode(
+        db: &DatabaseConnection,
+        form_data: episode::Model,
+    ) -> Result<episode::ActiveModel, DbErr> {
+        form_data.into_active_model().save(db).await
+    }
     pub async fn create_member(
         db: &DbConn,
         form_data: member::Model,

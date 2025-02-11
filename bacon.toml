@@ -21,18 +21,6 @@ need_stdout = false
 command = ["cargo", "clippy"]
 need_stdout = false
 
-# Run clippy on all targets
-# To disable some lints, you may change the job this way:
-#    [jobs.clippy-all]
-#    command = [
-#        "cargo", "clippy",
-#        "--all-targets",
-#    	 "--",
-#    	 "-A", "clippy::bool_to_int_with_if",
-#    	 "-A", "clippy::collapsible_if",
-#    	 "-A", "clippy::derive_partial_eq_without_eq",
-#    ]
-# need_stdout = false
 [jobs.clippy-all]
 command = ["cargo", "clippy", "--all-targets"]
 need_stdout = false
@@ -69,7 +57,6 @@ on_success = "back" # so that we don't open the browser at each change
 [jobs.run]
 command = [
     "cargo", "run",
-    # put launch parameters for your program behind a `--` separator
 ]
 need_stdout = true
 allow_warnings = true
@@ -86,13 +73,19 @@ background = true
 [jobs.run-long]
 command = [
     "cargo", "run",
-    # put launch parameters for your program behind a `--` separator
 ]
-watch = ["templates", "src"]
+watch = ["templates", "src", "api", "entities", "migration", "service"]
 need_stdout = true
 allow_warnings = true
 background = false
 on_change_strategy = "kill_then_restart"
+
+[jobs.frontend]
+command=["npm", "run", "build:dev"]
+watch = ["src", "templates"]
+need_stdout = true
+allow_warnings = true
+background = false
 
 # This parameterized job runs the example of your choice, as soon
 # as the code compiles.

@@ -1,9 +1,11 @@
+use crate::handlers::auth::login_required_middleware::login_required_middleware;
+use crate::handlers::auth::required_role_middleware::RequiredRoleMiddleware;
 use crate::{AppState, PaginationParams, DEFAULT_ITEMS_PER_PAGE};
 use entities::{member, member::Model as Member};
 use poem::error::InternalServerError;
 use poem::http::StatusCode;
 use poem::web::{Data, Form, Html, Path, Query};
-use poem::{get, handler, Error, IntoResponse, Route};
+use poem::{get, handler, post, EndpointExt, Error, IntoResponse, Route};
 use sea_orm::prelude::Uuid;
 use service::{Mutation as MutationCore, Query as QueryCore};
 
@@ -114,9 +116,13 @@ pub async fn destroy(
 }
 
 // A function to define all routes related to posts
-pub fn routes() -> Route {
+pub fn member_routes() -> Route {
     Route::new()
-        .at("/", get(list).post(create))
-        .at("/new", get(new))
-        .at("/:id", get(edit).patch(update).delete(destroy))
+        .at("/", get(list).around(login_required_middleware))
+        .at(
+            "/create",
+            post(create).with(RequiredRoleMiddleware::new("super_admin")),
+        )
+        .at("/new", get(new).with(RequiredRoleMiddleware::new("super_admin")))
+        .at("/:id", get(edit).patch(update).delete(destroy).with(RequiredRoleMiddleware::new("super_admin")))
 }
