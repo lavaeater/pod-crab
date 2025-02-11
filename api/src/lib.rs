@@ -31,8 +31,11 @@ struct PaginationParams {
     items_per_page: Option<u64>,
 }
 
-#[tokio::main]
-async fn start(root_path: Option<String>) -> std::io::Result<()> {
+#[shuttle_runtime::main]
+pub async fn start(
+    #[shuttle_shared_db::Postgres] pool: PgPool,
+    #[shuttle_runtime::Secrets] secrets: shuttle_runtime::SecretStore,
+    root_path: Option<String>) -> shuttle_poem::ShuttlePoem<impl poem::Endpoint> {
     let root_path = if let Some(root_path) = root_path { root_path } else { env::current_dir()?.to_str().unwrap().to_string() };
     env::set_var("RUST_LOG", "debug");
     tracing_subscriber::fmt::init();
@@ -90,12 +93,4 @@ async fn ensure_super_admin(database_connection: &DatabaseConnection) {
     }
         .insert(database_connection)
         .await;
-}
-
-pub fn main(root_path: Option<String>) {
-    let result = start(root_path);
-
-    if let Some(err) = result.err() {
-        println!("Error: {err}");
-    }
 }

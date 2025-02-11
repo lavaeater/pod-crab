@@ -9,3 +9,5 @@ members = ["entities", "api", "service", "migration"]
 
 [dependencies]
 api = { path = "api" }
+shuttle-poem = "0.52.0"
+shuttle-runtime = "0.52.0"
