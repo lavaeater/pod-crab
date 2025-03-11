@@ -67,7 +67,7 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
         )
         .nest(
             "/dist",
-            StaticFilesEndpoint::new(format!("{}/dist", &root_path)),
+            StaticFilesEndpoint::new(format!("{}/frontend/dist", &root_path)),
         )
         .with(CookieSession::new(CookieConfig::default())) //.secure(true)
         .data(state)
