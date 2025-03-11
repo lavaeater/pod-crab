@@ -20,8 +20,6 @@ RUN npm install
 COPY frontend ./
 RUN npm run build  # This assumes `build` runs `rspack build`
 
-
-
 # Runtime stage
 FROM debian:buster-slim
 
@@ -30,6 +28,7 @@ RUN apt-get update && apt-get install -y extra-runtime-dependencies && apt-get c
 
 # Copy the compiled binary from the builder stage
 COPY --from=builder /usr/local/cargo/bin/pod-crab /usr/local/bin/pod-crab
+COPY --from=builder /usr/src/pod-crab/frontend/dist /usr/local/bin/static
 
 # Ensure the working directory is set (useful for relative file paths)
 WORKDIR /usr/local/bin
