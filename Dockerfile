@@ -5,7 +5,7 @@ LABEL authors="tommie"
 WORKDIR /usr/src/pod-crab
 COPY . .
 
-RUN apt-get update && apt-get install -y pkg-config libssl-dev openssl curl
+RUN apt-get update && apt-get install -y apt-utils pkg-config libssl-dev openssl curl
 
 # Build the root package (not a specific workspace member)
 RUN cargo install --path .
@@ -24,10 +24,10 @@ COPY frontend ./
 RUN npm run build  # This assumes `build` runs `rspack build`
 
 # Runtime stage
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 
 # Install necessary runtime dependencies (if any)
-RUN apt-get update && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y apt-utils pkg-config libssl-dev openssl && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy the compiled binary from the builder stage
 COPY --from=builder /usr/local/cargo/bin/pod-crab /usr/local/bin/pod-crab
