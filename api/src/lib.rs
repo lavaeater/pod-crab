@@ -51,7 +51,7 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     
     ensure_super_admin(&conn).await;
     
-    let templates = Tera::new(&format!("{}/templates/**/*", &root_path)).unwrap();
+    let templates = Tera::new(&format!("{}/frontend/templates/**/*", &root_path)).unwrap();
     let google_client = setup_openid_client().await.unwrap();
     let state = AppState { templates, conn };
     

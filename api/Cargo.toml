@@ -16,17 +16,11 @@ service = { path = "../service" }
 reqwest = "0.12.12"
 serde = { version = "1", features = ["derive"] }
 tera = "1.20.0"
-sea-orm = "1.1.2"
-tokio = { version = "1.41.1", features = ["macros", "rt-multi-thread"] }
-poem = { version = "3.1.6", features = ["static-files", "cookie", "csrf", "fluent", "fluent-syntax", "i18n", "requestid", "session"] }
-poem-openapi = "5.1.5"
+sea-orm = "1.1.7"
+tokio = { version = "1.44.0", features = ["macros", "rt-multi-thread"] }
+poem = { version = "3.1.7", features = ["static-files", "cookie", "csrf", "fluent", "fluent-syntax", "i18n", "requestid", "session"] }
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 dotenvy = "0.15.7"
-openidconnect = "4.0.0-rc.1"
-url = "2.5.4"
-env_logger = "0.11.6"
-anyhow = "1.0.95"
-oauth2 = "5.0.0-rc.1"
-aws-config = { version = "1.1.7", features = ["behavior-version-latest"] }
-aws-sdk-s3 = "1.68.0"
-chrono = "0.4.38"
+openidconnect = "4.0.0"
+anyhow = "1.0.97"
+oauth2 = "5.0.0"
