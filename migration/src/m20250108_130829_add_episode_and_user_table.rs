@@ -37,6 +37,7 @@ impl MigrationTrait for Migration {
                 Episode::UserId,
                 User::Table,
                 User::Id,
+                true,
             ))
             .await?;
         Ok(())

@@ -28,8 +28,8 @@ services:
       db:
         condition: service_healthy  # Waits until healthcheck passes
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      HOST: ${HOST}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      HOST: 0.0.0.0
       PORT: ${PORT}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_PROJECT_ID: ${GOOGLE_PROJECT_ID}
