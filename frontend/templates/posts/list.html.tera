@@ -1,4 +1,4 @@
-{% extends "layout.html.tera" %} 
+{% extends "../layout.html.tera" %} 
 {% block content %}
   <div class="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8 py-6">
     <p><!-- Nothing to see here --></p>
@@ -18,7 +18,7 @@
       </thead>
       <tbody id="post-list">
       {% for post in posts %}
-        {% include "posts/post_row.html.tera" %}
+        {% include "post_row.html.tera" %}
       {% endfor %}
       </tbody>
       <tfoot>
