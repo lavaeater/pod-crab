@@ -5,12 +5,15 @@ LABEL authors="tommie"
 WORKDIR /usr/src/pod-crab
 COPY . .
 
+RUN apt-get install -y pkg-config libssl-dev openssl 
+
 # Build the root package (not a specific workspace member)
 RUN cargo install --path .
 
 # Install Node.js and Rspack
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs
+    apt-get install -y nodejs 
+
 
 WORKDIR /usr/src/pod-crab/frontend
 COPY frontend/package.json package-lock.json ./
