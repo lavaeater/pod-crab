@@ -5,7 +5,7 @@ LABEL authors="tommie"
 WORKDIR /usr/src/pod-crab
 COPY . .
 
-RUN apt-get install -y pkg-config libssl-dev openssl 
+RUN apt-get update && apt-get install -y pkg-config libssl-dev openssl curl
 
 # Build the root package (not a specific workspace member)
 RUN cargo install --path .
@@ -16,7 +16,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
 
 
 WORKDIR /usr/src/pod-crab/frontend
-COPY frontend/package.json package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json ./
 RUN npm install
 
 # Copy frontend source and build it
