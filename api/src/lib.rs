@@ -50,8 +50,9 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     Migrator::up(&conn, None).await.unwrap();
     
     ensure_super_admin(&conn).await;
-    
-    let templates = Tera::new(&format!("{}/frontend/templates/**/*", &root_path)).unwrap();
+    let template_path = format!("{}/frontend/templates/**/*", &root_path);
+    println!("{}", template_path);
+    let templates = Tera::new(&template_path).unwrap();
     let google_client = setup_openid_client().await.unwrap();
     let state = AppState { templates, conn };
     
