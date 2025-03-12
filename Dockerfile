@@ -32,9 +32,9 @@ RUN apt-get update && apt-get install -y apt-utils pkg-config libssl-dev openssl
 # Copy the compiled binary from the builder stage
 COPY --from=builder /usr/local/cargo/bin/pod-crab /usr/local/bin/pod-crab
 
-COPY --from=builder /usr/src/pod-crab/frontend/dist /usr/src/pod-crab/frontend/dist
-COPY --from=builder /usr/src/pod-crab/static /usr/src/pod-crab/static
-COPY --from=builder /usr/src/pod-crab/frontend/templates /usr/src/pod-crab/frontend/templates
+COPY --from=builder /usr/src/pod-crab/frontend/dist /usr/local/bin/frontend/dist
+COPY --from=builder /usr/src/pod-crab/static /usr/local/bin/static
+COPY --from=builder /usr/src/pod-crab/frontend/templates /usr/local/bin/frontend/templates
 
 # Ensure the working directory is set (useful for relative file paths)
 WORKDIR /usr/local/bin
