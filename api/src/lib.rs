@@ -36,6 +36,7 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     let root_path = if let Some(root_path) = root_path { root_path } else { env::current_dir()?.to_str().unwrap().to_string() };
     env::set_var("RUST_LOG", "debug");
     tracing_subscriber::fmt::init();
+    println!("Root path: {root_path}");
 
     // get env vars
     dotenvy::dotenv().ok();
