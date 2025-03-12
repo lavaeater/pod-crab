@@ -1,4 +1,4 @@
-cargo-features = ["codegen-backend"]
+#cargo-features = ["codegen-backend"]
 
 [package]
 name = "migration"
@@ -12,8 +12,7 @@ path = "src/lib.rs"
 
 [dependencies]
 async-std = { version = "1", features = ["attributes", "tokio1"] }
-anyhow = "1.0.95"
 
 [dependencies.sea-orm-migration]
 version = "1.1.0"
-features = ["runtime-tokio-rustls", "sqlx-sqlite"]
+features = ["runtime-tokio-rustls", "sqlx-sqlite", "sqlx-postgres"]

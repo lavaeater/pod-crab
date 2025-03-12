@@ -36,6 +36,7 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     let root_path = if let Some(root_path) = root_path { root_path } else { env::current_dir()?.to_str().unwrap().to_string() };
     env::set_var("RUST_LOG", "debug");
     tracing_subscriber::fmt::init();
+    println!("Root path: {root_path}");
 
     // get env vars
     dotenvy::dotenv().ok();
@@ -50,8 +51,9 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     Migrator::up(&conn, None).await.unwrap();
     
     ensure_super_admin(&conn).await;
-    
-    let templates = Tera::new(&format!("{}/templates/**/*", &root_path)).unwrap();
+    let template_path = format!("{}/frontend/templates/**/*", &root_path);
+    println!("{}", template_path);
+    let templates = Tera::new(&template_path).unwrap();
     let google_client = setup_openid_client().await.unwrap();
     let state = AppState { templates, conn };
     
@@ -67,7 +69,7 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
         )
         .nest(
             "/dist",
-            StaticFilesEndpoint::new(format!("{}/dist", &root_path)),
+            StaticFilesEndpoint::new(format!("{}/frontend/dist", &root_path)),
         )
         .with(CookieSession::new(CookieConfig::default())) //.secure(true)
         .data(state)

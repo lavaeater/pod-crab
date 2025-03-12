@@ -1,5 +1,5 @@
 pub use sea_orm_migration::prelude::*;
-use sea_orm_migration::schema::integer;
+use sea_orm_migration::schema::{integer, uuid};
 use std::fmt::Display;
 
 mod m20220120_000001_create_post_table;
@@ -25,12 +25,17 @@ pub fn foreign_key_auto<T, U>(
     fk_column: T,
     to_table: U,
     to_id_column: U,
+    use_uuid: bool,
 ) -> TableCreateStatement
 where
     T: IntoIden + Copy + Display + 'static,
     U: IntoIden + Copy + Display + 'static,
 {
-    table_create_statement.col(integer(fk_column).not_null());
+    if use_uuid {
+        table_create_statement.col(uuid(fk_column).not_null());
+    } else {
+        table_create_statement.col(integer(fk_column).not_null());
+    }
     table_create_statement.foreign_key(&mut fk_auto(from_table, fk_column, to_table, to_id_column));
     table_create_statement.to_owned()
 }

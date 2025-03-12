@@ -1,4 +1,4 @@
-cargo-features = ["codegen-backend"]
+#cargo-features = ["codegen-backend"]
 
 [package]
 name = "entities"
@@ -11,4 +11,4 @@ path = "src/lib.rs"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-sea-orm = "1.1.2"
+sea-orm = "1.1.7"

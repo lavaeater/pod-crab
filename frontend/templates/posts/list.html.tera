@@ -18,7 +18,7 @@
       </thead>
       <tbody id="post-list">
       {% for post in posts %}
-        {% include "posts/post_row.html.tera" %}
+        {% include "post_row.html.tera" %}
       {% endfor %}
       </tbody>
       <tfoot>

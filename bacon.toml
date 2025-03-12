@@ -81,8 +81,8 @@ background = false
 on_change_strategy = "kill_then_restart"
 
 [jobs.frontend]
-command=["npm", "run", "build:dev"]
-watch = ["src", "templates"]
+command=["npm", "--prefix", "frontend/", "run", "build:dev"]
+watch = ["frontend"]
 need_stdout = true
 allow_warnings = true
 background = false

@@ -20,7 +20,7 @@
       </thead>
       <tbody id="post-list">
       {% for member in members %}
-        {% include "members/member_row.html.tera" %}
+        {% include "member_row.html.tera" %}
       {% endfor %}
       </tbody>
       <tfoot>
