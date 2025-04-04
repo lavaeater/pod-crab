@@ -1,10 +1,16 @@
 {% extends "layout.html.tera" %} 
 {% block content %}
-  <div class="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8 py-6" hx-boost="true">
-    <p class="prose">Upload a file for importing.</p>
-    <form action="/" enctype="multipart/form-data" method="post">
-      <input type="file" name="upload" id="file">
-      <button type="submit">Submit</button>
+    <form id='form' hx-encoding='multipart/form-data' hx-post='/upload'>
+        <input type='file' name='file'>
+        <button>
+            Upload
+        </button>
+        <progress id='progress' value='0' max='100'></progress>
     </form>
-  </div>
+    <script lang="js">
+        const htmx = require("htmx.org");
+        htmx.on('#form', 'htmx:xhr:progress', function (evt) {
+            htmx.find('#progress').setAttribute('value', evt.detail.loaded / evt.detail.total * 100)
+        });
+    </script>
 {% endblock content %}
