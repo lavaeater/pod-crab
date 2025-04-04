@@ -13,12 +13,12 @@ path = "src/lib.rs"
 migration = { path = "../migration" }
 entities = { path = "../entities" }
 service = { path = "../service" }
-reqwest = "0.12.12"
+reqwest = "0.12.15"
 serde = { version = "1", features = ["derive"] }
 tera = "1.20.0"
-sea-orm = { version = "1.1.7", features = ["runtime-tokio-rustls", "sqlx-sqlite", "sqlx-postgres"] }
-tokio = { version = "1.44.0", features = ["macros", "rt-multi-thread"] }
-poem = { version = "3.1.7", features = ["static-files", "cookie", "fluent", "fluent-syntax", "i18n", "requestid", "session"] }
+sea-orm = { version = "1.1.8", features = ["runtime-tokio-rustls", "sqlx-sqlite", "sqlx-postgres"] }
+tokio = { version = "1.44.1", features = ["macros", "rt-multi-thread"] }
+poem = { version = "3.1.8", features = ["static-files", "cookie", "fluent", "fluent-syntax", "i18n", "requestid", "session"] }
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 dotenvy = "0.15.7"
 openidconnect = "4.0.0"
