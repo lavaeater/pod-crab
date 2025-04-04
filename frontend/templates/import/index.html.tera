@@ -1,0 +1,10 @@
+{% extends "layout.html.tera" %} 
+{% block content %}
+  <div class="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8 py-6" hx-boost="true">
+    <p class="prose">Upload a file for importing.</p>
+    <form action="/" enctype="multipart/form-data" method="post">
+      <input type="file" name="upload" id="file">
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+{% endblock content %}
