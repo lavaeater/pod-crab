@@ -5,6 +5,7 @@ use std::fmt::Display;
 mod m20220120_000001_create_post_table;
 mod m20241205_170802_create_member_table;
 mod m20250108_130829_add_episode_and_user_table;
+mod m20250405_063228_create_import;
 
 pub struct Migrator;
 
@@ -15,6 +16,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20220120_000001_create_post_table::Migration),
             Box::new(m20241205_170802_create_member_table::Migration),
             Box::new(m20250108_130829_add_episode_and_user_table::Migration),
+            Box::new(m20250405_063228_create_import::Migration),
         ]
     }
 }
