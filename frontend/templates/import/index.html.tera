@@ -1,16 +1,18 @@
 {% extends "layout.html.tera" %} 
 {% block content %}
-    <form id='form' hx-encoding='multipart/form-data' hx-post='/upload'>
+    <form id='form' hx-encoding='multipart/form-data' hx-post='/import/upload'>
         <input type='file' name='file'>
         <button>
             Upload
         </button>
         <progress id='progress' value='0' max='100'></progress>
     </form>
-    <script lang="js">
-        const htmx = require("htmx.org");
-        htmx.on('#form', 'htmx:xhr:progress', function (evt) {
-            htmx.find('#progress').setAttribute('value', evt.detail.loaded / evt.detail.total * 100)
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            htmx.on('#form', 'htmx:xhr:progress', function (evt) {
+                htmx.find('#progress').setAttribute('value', evt.detail.loaded / evt.detail.total * 100)
+            });
         });
     </script>
+
 {% endblock content %}
