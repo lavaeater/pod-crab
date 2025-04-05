@@ -21,6 +21,22 @@ impl MigratorTrait for Migrator {
     }
 }
 
+/// Adds a foreign key to a table.
+///
+/// Adds a foreign key to a table, and if `use_uuid` is true, the foreign key is a UUID, otherwise it is an integer.
+///
+/// # Arguments
+///
+/// * `table_create_statement`: A mutable `TableCreateStatement` to add the foreign key to.
+/// * `from_table`: The table this foreign key is on.
+/// * `fk_column`: The column on `from_table` that is the foreign key.
+/// * `to_table`: The table that `fk_column` points to.
+/// * `to_id_column`: The column on `to_table` that `fk_column` points to.
+/// * `use_uuid`: A boolean indicating whether the foreign key is a UUID or an integer.
+///
+/// # Returns
+///
+/// The `table_create_statement` passed in, but with the foreign key added.
 pub fn foreign_key_auto<T, U>(
     table_create_statement: &mut TableCreateStatement,
     from_table: T,
