@@ -4,6 +4,7 @@ pub mod prelude;
 
 pub mod episode;
 pub mod import;
+pub mod import_row;
 pub mod member;
 pub mod post;
 pub mod user;
