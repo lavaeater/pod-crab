@@ -1,18 +1,11 @@
 {% extends "layout.html.tera" %} 
 {% block content %}
-    <form id='form' hx-encoding='multipart/form-data' hx-post='/import/upload'>
-        <input type='file' name='file'>
+    <form hx-boost="false" hx-encoding="multipart/form-data" hx-post="import/upload"
+          _="on htmx:xhr:progress(loaded, total) set #progress.value to (loaded/total)*100">
+        <input type="file" name="file">
         <button>
             Upload
         </button>
-        <progress id='progress' value='0' max='100'></progress>
+        <progress id="progress" value="0" max="100"></progress>
     </form>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            htmx.on('#form', 'htmx:xhr:progress', function (evt) {
-                htmx.find('#progress').setAttribute('value', evt.detail.loaded / evt.detail.total * 100)
-            });
-        });
-    </script>
-
 {% endblock content %}

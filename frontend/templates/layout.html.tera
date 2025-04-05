@@ -3,11 +3,11 @@
 <head>
     <meta charset="utf-8"/>
     <title>{% block title %}{% endblock %}</title>
-    <meta name="description" content="Actix - SeaOrm integration example"/>
-    <meta name="author" content="Sam Samai"/>
+    <meta name="description" content="{% block description %}{% endblock %}"/>
+    <meta name="author" content="Tommie Nygren"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-
     <link href="/dist/main.css" rel="stylesheet">
+    <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
     <script src="/dist/main.js" defer></script>
     <link rel="icon" type="image/png" href="/static/images/favicon.png"/>
 </head>
