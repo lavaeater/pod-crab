@@ -1,5 +1,6 @@
 {% extends "layout.html.tera" %} 
 {% block content %}
+    <h1 class="text-3xl font-bold mb-4">Boxing</h1>
     <div class="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8 py-6" hx-boost="true">
         <p class="prose">Yo, what up bitches?</p>
         <a href="/posts" class="link-primary">Posts</a><br/>

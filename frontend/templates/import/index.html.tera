@@ -3,6 +3,7 @@
     <form hx-boost="false" hx-encoding="multipart/form-data" hx-post="import/upload"
           _="on htmx:xhr:progress(loaded, total) set #progress.value to (loaded/total)*100">
         <input type="file" name="file">
+        
         <button>
             Upload
         </button>
