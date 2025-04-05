@@ -103,3 +103,5 @@ allow_warnings = true
 [keybindings]
 # alt-m = "job:my-job"
 c = "job:clippy-all" # comment this to have 'c' run clippy on only the default target
+f = "job:frontend"
+r = "job:run-long"
