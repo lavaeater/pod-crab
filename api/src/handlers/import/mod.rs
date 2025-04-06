@@ -19,21 +19,51 @@ pub async fn index(
     Ok(Html(body))
 }
 
+#[derive(Debug)]
+enum ImportType {
+    Members,
+    Transactions,
+}
+
 #[handler]
 async fn upload(mut multipart: Multipart) -> poem::Result<impl IntoResponse> {
+    let mut import_type = None;
+    let mut file_data = None;
+
     while let Ok(Some(field)) = multipart.next_field().await {
-        let name = field.name().map(ToString::to_string);
-        let file_name = field.file_name().map(ToString::to_string);
-        if let Ok(bytes) = field.bytes().await {
-            println!(
-                "name={:?} filename={:?} length={}",
-                name,
-                file_name,
-                bytes.len()
-            );
+        if let Some(name) = field.name() {
+            match name {
+                "import_type" => {
+                    if let Ok(value) = field.text().await {
+                        import_type = Some(match value.as_str() {
+                            "members" => ImportType::Members,
+                            "transactions" => ImportType::Transactions,
+                            _ => return Ok(Html("Invalid import type")),
+                        });
+                    }
+                }
+                "file" => {
+                    if let Ok(bytes) = field.bytes().await {
+                        file_data = Some(bytes);
+                    }
+                }
+                _ => {}
+            }
         }
     }
-    Ok(Html("ok"))
+
+    match (import_type, file_data) {
+        (Some(import_type), Some(bytes)) => {
+            println!(
+                "Processing {:?} import with file size {}",
+                import_type,
+                bytes.len()
+            );
+            // TODO: Process the file based on import_type
+            Ok(Html("Import successful"))
+        }
+        _ => Ok(Html("Missing import type or file")),
+    }
 }
 
 pub fn import_routes() -> Route {
@@ -41,6 +71,6 @@ pub fn import_routes() -> Route {
         .at("/", get(index).around(login_required_middleware))
         .at(
             "/upload",
-            post(upload).with(RequiredRoleMiddleware::new("super_admin")),
+            post(upload).around(RequiredRoleMiddleware::new(vec!["admin"])),
         )
 }
