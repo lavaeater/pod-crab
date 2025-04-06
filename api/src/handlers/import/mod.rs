@@ -71,6 +71,6 @@ pub fn import_routes() -> Route {
         .at("/", get(index).around(login_required_middleware))
         .at(
             "/upload",
-            post(upload).around(RequiredRoleMiddleware::new(vec!["admin"])),
+            post(upload).with(RequiredRoleMiddleware::new("super_admin")),
         )
 }
