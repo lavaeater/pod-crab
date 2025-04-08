@@ -14,6 +14,7 @@ pub struct Model {
     pub email: String,
     pub mobile_phone: String,
     pub birth_date: Date,
+    pub hash: String
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

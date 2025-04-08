@@ -8,6 +8,7 @@ use poem::{get, handler, post, EndpointExt, IntoResponse, Route};
 use sha2::{Digest, Sha256};
 use entities::member;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+use service::Mutation;
 
 #[handler]
 pub async fn index(
@@ -92,7 +93,7 @@ async fn upload(state: Data<&AppState>, mut multipart: Multipart) -> poem::Resul
                             email: email.to_string(),
                         };
                         
-                        if let Err(e) = service::mutation::Mutation::create_member(conn, member_model).await {
+                        if let Err(e) = Mutation::create_member(conn, member_model).await {
                             // Handle error (log it, but continue processing other records)
                             log::error!("Failed to create member: {}", e);
                         } else {
@@ -103,7 +104,6 @@ async fn upload(state: Data<&AppState>, mut multipart: Multipart) -> poem::Resul
                 }
                 ImportType::Transactions => {
                     let mut cursor = std::io::Cursor::new(&bytes);
-                    crate::handlers::import::transactions::import(&mut cursor).await;
                     Ok(Html("Transactions import successful"))
                 }
             }

@@ -23,20 +23,23 @@ impl MigrationTrait for Migration {
             .await?;
 
         manager
-            .create_table(foreign_key_auto(
-                &mut Table::create()
+            .create_table(
+                Table::create()
                     .table(ImportRow::Table)
                     .if_not_exists()
                     .col(pk_uuid(ImportRow::Id))
                     .col(string(ImportRow::Data))
                     .col(string(ImportRow::Hash))
-                    .to_owned(),
-                ImportRow::Table,
-                ImportRow::ImportId,
-                Import::Table,
-                Import::Id,
-                true,
-            ))
+                    .foreign_key(
+                        ForeignKey::create()
+                        .from(ImportRow::Table, ImportRow::ImportId)
+                        .to(Import::Table, Import::Id)
+                        .on_delete(ForeignKeyAction::Cascade))
+                    .index(Index::create()
+                        .name("idx_import_row_hash")
+                        .col(ImportRow::Hash)
+                    )
+                    .to_owned())
             .await
     }
 

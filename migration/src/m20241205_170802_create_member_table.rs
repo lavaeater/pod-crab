@@ -18,6 +18,11 @@ impl MigrationTrait for Migration {
                     .col(string(Member::Email))
                     .col(string(Member::MobilePhone))
                     .col(date(Member::BirthDate))
+                    .col(string(Member::Hash))
+                    .index(Index::create()
+                        .name("idx_member_hash")
+                        .col(Member::Hash)
+                    )
                     .to_owned(),
             )
             .await
@@ -40,4 +45,5 @@ enum Member {
     Email,
     MobilePhone,
     BirthDate,
+    Hash,
 }

@@ -23,6 +23,7 @@ impl Mutation {
             email: Set(form_data.email.to_owned()),
             mobile_phone: Set(form_data.mobile_phone.to_owned()),
             birth_date: Set(form_data.birth_date.to_owned()),
+            hash: Set(form_data.hash.to_owned()),
             ..Default::default()
         }
         .save(db)
