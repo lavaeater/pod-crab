@@ -1,3 +1,4 @@
+use crate::foreign_key_auto;
 use sea_orm_migration::{prelude::*, schema::*};
 use std::fmt;
 use std::fmt::Display;
@@ -23,22 +24,21 @@ impl MigrationTrait for Migration {
 
         manager
             .create_table(
-                Table::create()
-                    .table(ImportRow::Table)
-                    .if_not_exists()
-                    .col(pk_uuid(ImportRow::Id))
-                    .col(string(ImportRow::Data))
-                    .col(string(ImportRow::Hash))
-                    .foreign_key(
-                        ForeignKey::create()
-                        .from(ImportRow::Table, ImportRow::ImportId)
-                        .to(Import::Table, Import::Id)
-                        .on_delete(ForeignKeyAction::Cascade))
-                    .index(Index::create()
-                        .name("idx_import_row_hash")
-                        .col(ImportRow::Hash)
-                    )
-                    .to_owned())
+                foreign_key_auto(
+                    Table::create()
+                        .table(ImportRow::Table)
+                        .if_not_exists()
+                        .col(pk_uuid(ImportRow::Id))
+                        .col(string(ImportRow::Data))
+                        .col(string(ImportRow::Hash)),
+                    ImportRow::Table,
+                    ImportRow::ImportId,
+                    Import::Table,
+                    Import::Id,
+                    true,
+                )
+                .to_owned(),
+            )
             .await
     }
 
