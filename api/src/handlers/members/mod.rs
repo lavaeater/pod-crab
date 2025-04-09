@@ -6,9 +6,7 @@ use poem::error::InternalServerError;
 use poem::http::StatusCode;
 use poem::web::{Data, Form, Html, Path, Query};
 use poem::{get, handler, post, EndpointExt, Error, IntoResponse, Route};
-use sea_orm::DbErr;
 use sea_orm::prelude::Uuid;
-use entities::member::ActiveModel;
 use service::{MutationCore as MutationCore, QueryCore as QueryCore};
 
 #[handler]
@@ -54,7 +52,6 @@ pub async fn new(state: Data<&AppState>) -> poem::Result<impl IntoResponse> {
     match state.templates.render("members/new.html.tera", &ctx) {
         Ok(rendered) => Ok(Html(rendered)),
         Err(err) => {
-            eprintln!("Tera rendering error: {:?}", err); // Log the error
             Err(InternalServerError(err))
         }
     }
