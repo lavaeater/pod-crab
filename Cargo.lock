@@ -3608,6 +3608,7 @@ version = "0.1.0"
 dependencies = [
  "entities",
  "sea-orm",
+ "sha2",
 ]
 
 [[package]]

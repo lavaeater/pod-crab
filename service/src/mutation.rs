@@ -1,10 +1,69 @@
-use entities::{episode, member, member::Entity as Member};
+use entities::{episode, import_row, member, member::Entity as Member};
 use entities::{post, post::Entity as Post};
 
 use sea_orm::prelude::Uuid;
 use sea_orm::*;
+use sha2::{Digest, Sha256};
 
 pub struct Mutation;
+
+pub trait RecordHash {
+    fn hash(&self) -> String;
+}
+
+impl RecordHash for member::Model {
+    fn hash(&self) -> String {
+        // Normalize data by trimming and converting to lowercase
+        let normalized = format!(
+            "{}:{}:{}:{}:{}",
+            self.first_name.trim().to_lowercase(),
+            self.last_name.trim().to_lowercase(),
+            self.birth_date.to_string().trim(),
+            self.mobile_phone.trim().replace(['-', ' ', '(', ')', '+'], ""),
+            self.email.trim().to_lowercase()
+        );
+
+        // Calculate SHA-256 hash
+        let mut hasher = Sha256::new();
+        hasher.update(normalized);
+        let result = hasher.finalize();
+
+        // Convert to hex string
+        format!("{:x}", result)
+    }
+}
+
+impl RecordHash for import_row::Model {
+    fn hash(&self) -> String {
+        let normalized = format!(
+            "{}:{}:{}:{}:{}",
+            self.first_name.trim().to_lowercase(),
+            self.last_name.trim().to_lowercase(),
+            self.birth_date.to_string().trim(),
+            self.mobile_phone.trim().replace(['-', ' ', '(', ')', '+'], ""),
+            self.email.trim().to_lowercase()
+        );
+
+        // Calculate SHA-256 hash
+        let mut hasher = Sha256::new();
+        hasher.update(normalized);
+        let result = hasher.finalize();
+
+        // Convert to hex string
+        format!("{:x}", result)
+        
+    }
+}
+
+fn calculate_member_hash(
+    first_name: &str,
+    last_name: &str,
+    birthdate: &str,
+    phone_number: &str,
+    email: &str
+) -> String {
+    
+}
 
 impl Mutation {
     pub async fn create_episode(
@@ -48,6 +107,7 @@ impl Mutation {
             email: Set(form_data.email.to_owned()),
             mobile_phone: Set(form_data.mobile_phone.to_owned()),
             birth_date: Set(form_data.birth_date.to_owned()),
+            hash: Default::default(),
         }
         .update(db)
         .await

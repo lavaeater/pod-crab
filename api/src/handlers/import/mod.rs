@@ -113,31 +113,7 @@ async fn upload(state: Data<&AppState>, mut multipart: Multipart) -> poem::Resul
 }
 
 /// Calculate a hash for member data to uniquely identify potential duplicates
-fn calculate_member_hash(
-    first_name: &str, 
-    last_name: &str, 
-    birthdate: &str, 
-    phone_number: &str, 
-    email: &str
-) -> String {
-    // Normalize data by trimming and converting to lowercase
-    let normalized = format!(
-        "{}:{}:{}:{}:{}", 
-        first_name.trim().to_lowercase(),
-        last_name.trim().to_lowercase(),
-        birthdate.trim(),
-        phone_number.trim().replace(['-', ' ', '(', ')', '+'], ""),
-        email.trim().to_lowercase()
-    );
-    
-    // Calculate SHA-256 hash
-    let mut hasher = Sha256::new();
-    hasher.update(normalized);
-    let result = hasher.finalize();
-    
-    // Convert to hex string
-    format!("{:x}", result)
-}
+
 
 /// Check if a member with similar data already exists in the database
 async fn member_exists_by_data(
