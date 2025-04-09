@@ -34,7 +34,7 @@ use sea_orm::{ActiveModelTrait, NotSet};
 use std::env;
 use std::string::ToString;
 
-use service::Query as QueryCore;
+use service::QueryCore as QueryCore;
 
 // Teach openidconnect-rs about a Google custom extension to the OpenID Discovery response that we can use as the RFC
 // 7009 OAuth 2.0 Token Revocation endpoint. For more information about the Google specific Discovery response see the

@@ -1,71 +1,54 @@
 use entities::{episode, import_row, member, member::Entity as Member};
 use entities::{post, post::Entity as Post};
 
-use sea_orm::prelude::Uuid;
+use sea_orm::prelude::{Date, Uuid};
 use sea_orm::*;
 use sha2::{Digest, Sha256};
 
-pub struct Mutation;
+pub struct MutationCore;
 
 pub trait RecordHash {
     fn hash(&self) -> String;
 }
 
+pub fn calculate_member_hash(first_name: &str, last_name: &str, birth_date: &Date, mobile_phone: &str, email: &str) -> String {
+    let normalized = format!(
+        "{}:{}:{}:{}:{}",
+        first_name.trim().to_lowercase(),
+        last_name.trim().to_lowercase(),
+        birth_date.to_string().trim(),
+        mobile_phone.trim().replace(['-', ' ', '(', ')', '+'], ""),
+        email.trim().to_lowercase()
+    );
+
+    // Calculate SHA-256 hash
+    let mut hasher = Sha256::new();
+    hasher.update(normalized);
+    let result = hasher.finalize();
+
+    // Convert to hex string
+    format!("{:x}", result)
+}
+
 impl RecordHash for member::Model {
     fn hash(&self) -> String {
-        // Normalize data by trimming and converting to lowercase
-        let normalized = format!(
-            "{}:{}:{}:{}:{}",
-            self.first_name.trim().to_lowercase(),
-            self.last_name.trim().to_lowercase(),
-            self.birth_date.to_string().trim(),
-            self.mobile_phone.trim().replace(['-', ' ', '(', ')', '+'], ""),
-            self.email.trim().to_lowercase()
-        );
-
-        // Calculate SHA-256 hash
-        let mut hasher = Sha256::new();
-        hasher.update(normalized);
-        let result = hasher.finalize();
-
-        // Convert to hex string
-        format!("{:x}", result)
+        calculate_member_hash(&self.first_name, &self.last_name, &self.birth_date, &self.mobile_phone, &self.email)
     }
 }
 
 impl RecordHash for import_row::Model {
     fn hash(&self) -> String {
-        let normalized = format!(
-            "{}:{}:{}:{}:{}",
-            self.first_name.trim().to_lowercase(),
-            self.last_name.trim().to_lowercase(),
-            self.birth_date.to_string().trim(),
-            self.mobile_phone.trim().replace(['-', ' ', '(', ')', '+'], ""),
-            self.email.trim().to_lowercase()
-        );
-
         // Calculate SHA-256 hash
         let mut hasher = Sha256::new();
-        hasher.update(normalized);
+        hasher.update(self.data.to_string());
         let result = hasher.finalize();
 
         // Convert to hex string
         format!("{:x}", result)
-        
     }
 }
 
-fn calculate_member_hash(
-    first_name: &str,
-    last_name: &str,
-    birthdate: &str,
-    phone_number: &str,
-    email: &str
-) -> String {
-    
-}
-
-impl Mutation {
+impl MutationCore {
     pub async fn create_episode(
         db: &DatabaseConnection,
         form_data: episode::Model,

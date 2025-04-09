@@ -3,12 +3,12 @@ use crate::handlers::auth::login_required_middleware::login_required_middleware;
 use crate::handlers::auth::required_role_middleware::RequiredRoleMiddleware;
 use crate::{AppState, PaginationParams};
 use poem::error::InternalServerError;
+use poem::http::StatusCode;
 use poem::web::{Data, Html, Multipart, Query};
 use poem::{get, handler, post, EndpointExt, IntoResponse, Route};
-use sha2::{Digest, Sha256};
-use entities::member;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
-use service::Mutation;
+use entities::member;
+use service::{calculate_member_hash, MutationCore, QueryCore};
 
 #[handler]
 pub async fn index(
@@ -17,6 +17,11 @@ pub async fn index(
 ) -> poem::Result<impl IntoResponse> {
     let mut ctx = tera::Context::new();
 
+    let imports = QueryCore::list_imports(&state.conn)
+        .await
+        .map_err(InternalServerError)?;
+    ctx.insert("imports", &imports);
+    
     let body = state
         .templates
         .render("import/index.html.tera", &ctx)
@@ -31,7 +36,7 @@ enum ImportType {
 }
 
 #[handler]
-async fn upload(state: Data<&AppState>, mut multipart: Multipart) -> poem::Result<impl IntoResponse> {
+pub async fn upload(state: Data<&AppState>, mut multipart: Multipart) -> poem::Result<impl IntoResponse> {
     let mut import_type = None;
     let mut file_data = None;
 
@@ -43,7 +48,7 @@ async fn upload(state: Data<&AppState>, mut multipart: Multipart) -> poem::Resul
                         import_type = Some(match value.as_str() {
                             "members" => ImportType::Members,
                             "transactions" => ImportType::Transactions,
-                            _ => return Ok(Html("Invalid import type")),
+                            _ => return Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/import")),
                         });
                     }
                 }
@@ -61,13 +66,13 @@ async fn upload(state: Data<&AppState>, mut multipart: Multipart) -> poem::Resul
         (Some(import_type), Some(bytes)) => {
             match import_type {
                 ImportType::Members => {
-                    let mut csv_reader = csv::Reader::from_reader(&bytes);
+                    let mut csv_reader = csv::Reader::from_reader(bytes.as_slice());
                     let conn = &state.conn;
-                    let mut imported = 0;
-                    let mut skipped = 0;
+                    let mut _imported = 0;
+                    let mut _skipped = 0;
                     
                     for r in csv_reader.records() {
-                        let record = r?;
+                        let record = r.map_err(InternalServerError)?;
                         let first_name = record.get(0).unwrap();
                         let last_name = record.get(1).unwrap();
                         let birthdate = record.get(2).unwrap();
@@ -75,11 +80,12 @@ async fn upload(state: Data<&AppState>, mut multipart: Multipart) -> poem::Resul
                         let email = record.get(4).unwrap();
                         
                         // Calculate hash for the record
-                        let record_hash = calculate_member_hash(first_name, last_name, birthdate, phone_number, email);
+                        let birth_date = sea_orm::prelude::Date::from_str(birthdate).unwrap_or_else(|_| (sea_orm::prelude::Date::MIN));
+                        let record_hash = calculate_member_hash(first_name, last_name, &birth_date, phone_number, email);
                         
                         // Check if member with similar data already exists
-                        if member_exists_by_data(conn, first_name, last_name, email).await {
-                            skipped += 1;
+                        if member_exists_by_hash(conn, &record_hash).await {
+                            _skipped += 1;
                             continue;
                         }
                         
@@ -88,34 +94,61 @@ async fn upload(state: Data<&AppState>, mut multipart: Multipart) -> poem::Resul
                             id: sea_orm::prelude::Uuid::new_v4(),
                             first_name: first_name.to_string(),
                             last_name: last_name.to_string(),
-                            birth_date: sea_orm::prelude::Date::from_str(birthdate).expect("Invalid date format"),
+                            birth_date,
                             mobile_phone: phone_number.to_string(),
                             email: email.to_string(),
+                            hash: record_hash,
                         };
                         
-                        if let Err(e) = Mutation::create_member(conn, member_model).await {
+                        if let Err(e) = MutationCore::create_member(conn, member_model).await {
                             // Handle error (log it, but continue processing other records)
                             log::error!("Failed to create member: {}", e);
                         } else {
-                            imported += 1;
+                            _imported += 1;
                         }
                     }
-                    Ok(Html(format!("Import completed: {} imported, {} skipped (already exist)", imported, skipped)))
+                    Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/import"))
                 }
                 ImportType::Transactions => {
-                    let mut cursor = std::io::Cursor::new(&bytes);
-                    Ok(Html("Transactions import successful"))
+                    let mut _cursor = std::io::Cursor::new(&bytes);
+                    Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/import"))
                 }
             }
         }
-        _ => Ok(Html("Missing import type or file")),
+        _ => Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/import")),
     }
 }
 
-/// Calculate a hash for member data to uniquely identify potential duplicates
+/// Check if a member with similar data already exists in the database
+async fn member_exists_by_hash(
+    conn: &sea_orm::DatabaseConnection,
+    hash: &str
+) -> bool {
+    // Check for existing members with the same email (primary check)
+    let hash_match = member::Entity::find()
+        .filter(member::Column::Hash.eq(hash.to_string()))
+        .one(conn)
+        .await;
 
+    match hash_match {
+        Ok(m) => {
+            match m {
+                Some(_) => {
+                    true
+                }
+                None => {
+                    false
+                }
+            }
+        }
+        Err(_) => {
+            false
+        }
+    }
+}
 
 /// Check if a member with similar data already exists in the database
+#[allow(dead_code)]
 async fn member_exists_by_data(
     conn: &sea_orm::DatabaseConnection,
     first_name: &str,

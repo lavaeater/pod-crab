@@ -1,12 +1,12 @@
 use entities::prelude::User;
-use entities::{episode, episode::Entity as Episode, member, member::Entity as Member, user};
+use entities::{episode, episode::Entity as Episode, import, import::Entity as Import, member, member::Entity as Member, user};
 use entities::{post, post::Entity as Post};
 use sea_orm::prelude::Uuid;
 use sea_orm::*;
 
-pub struct Query;
+pub struct QueryCore;
 
-impl Query {
+impl QueryCore {
     pub async fn find_member_by_id(db: &DbConn, id: Uuid) -> Result<Option<member::Model>, DbErr> {
         Member::find_by_id(id).one(db).await
     }
@@ -67,5 +67,9 @@ impl Query {
             .filter(user::Column::Email.contains(email))
             .one(db)
             .await
+    }
+    
+    pub async fn list_imports(db: &DbConn) -> Result<Vec<import::Model>, DbErr> {
+        Import::find().all(db).await
     }
 }

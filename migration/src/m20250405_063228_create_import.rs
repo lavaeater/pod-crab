@@ -1,4 +1,3 @@
-use crate::foreign_key_auto;
 use sea_orm_migration::{prelude::*, schema::*};
 use std::fmt;
 use std::fmt::Display;

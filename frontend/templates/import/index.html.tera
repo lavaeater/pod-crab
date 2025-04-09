@@ -32,5 +32,18 @@
             </button>
             <progress id="progress" value="0" max="100" class="h-2 w-48 [&::-webkit-progress-bar]:rounded-lg [&::-webkit-progress-value]:rounded-lg [&::-webkit-progress-bar]:bg-gray-200 [&::-webkit-progress-value]:bg-blue-500"></progress>
         </div>
+
+        <table class="table table-zebra w-full">
+            <thead>
+            <tr>
+                <th>Import Title</th>
+            </tr>
+            </thead>
+            <tbody id="import-list">
+            {% for import in imports %}
+                {% include "import_row.html.tera" %}
+            {% endfor %}
+            </tbody>
+        </table>
     </form>
 {% endblock content %}

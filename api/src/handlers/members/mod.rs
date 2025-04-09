@@ -7,7 +7,7 @@ use poem::http::StatusCode;
 use poem::web::{Data, Form, Html, Path, Query};
 use poem::{get, handler, post, EndpointExt, Error, IntoResponse, Route};
 use sea_orm::prelude::Uuid;
-use service::{Mutation as MutationCore, Query as QueryCore};
+use service::{MutationCore as MutationCore, QueryCore as QueryCore};
 
 #[handler]
 pub async fn create(state: Data<&AppState>, form: Form<Member>) -> poem::Result<impl IntoResponse> {
