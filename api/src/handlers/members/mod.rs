@@ -6,16 +6,17 @@ use poem::error::InternalServerError;
 use poem::http::StatusCode;
 use poem::web::{Data, Form, Html, Path, Query};
 use poem::{get, handler, post, EndpointExt, Error, IntoResponse, Route};
+use sea_orm::DbErr;
 use sea_orm::prelude::Uuid;
+use entities::member::ActiveModel;
 use service::{MutationCore as MutationCore, QueryCore as QueryCore};
 
 #[handler]
 pub async fn create(state: Data<&AppState>, form: Form<Member>) -> poem::Result<impl IntoResponse> {
-    let form = form.0;
+    let mut form = form.0;
     let conn = &state.conn;
-
-    MutationCore::create_member(conn, form)
-        .await
+    
+    MutationCore::create_member(conn, form).await
         .map_err(InternalServerError)?;
 
     Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/members"))

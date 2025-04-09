@@ -37,7 +37,6 @@ async fn start(root_path: Option<String>) -> std::io::Result<()> {
     } else {
         env::current_dir()?.to_str().unwrap().to_string()
     };
-    // env::set_var("RUST_LOG", "debug");
     tracing_subscriber::fmt::init();
     println!("Root path: {root_path}");
 

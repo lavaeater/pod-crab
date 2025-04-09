@@ -1,3 +1,4 @@
+use std::default::Default;
 use std::str::FromStr;
 use crate::handlers::auth::login_required_middleware::login_required_middleware;
 use crate::handlers::auth::required_role_middleware::RequiredRoleMiddleware;
@@ -7,8 +8,9 @@ use poem::http::StatusCode;
 use poem::web::{Data, Html, Multipart, Query};
 use poem::{get, handler, post, EndpointExt, IntoResponse, Route};
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
-use entities::member;
-use service::{calculate_member_hash, MutationCore, QueryCore};
+use sea_orm::prelude::Uuid;
+use entities::{calculate_member_hash, member};
+use service::{MutationCore, QueryCore};
 
 #[handler]
 pub async fn index(
@@ -91,13 +93,13 @@ pub async fn upload(state: Data<&AppState>, mut multipart: Multipart) -> poem::R
                         
                         // Create the member
                         let member_model = member::Model {
-                            id: sea_orm::prelude::Uuid::new_v4(),
+                            id: Uuid::default(),
                             first_name: first_name.to_string(),
                             last_name: last_name.to_string(),
                             birth_date,
                             mobile_phone: phone_number.to_string(),
                             email: email.to_string(),
-                            hash: record_hash,
+                            hash: String::default()
                         };
                         
                         if let Err(e) = MutationCore::create_member(conn, member_model).await {

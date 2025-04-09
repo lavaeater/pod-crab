@@ -1,52 +1,10 @@
-use entities::{episode, import_row, member, member::Entity as Member};
+use entities::{episode, member, member::Entity as Member, RecordHash};
 use entities::{post, post::Entity as Post};
 
-use sea_orm::prelude::{Date, Uuid};
+use sea_orm::prelude::Uuid;
 use sea_orm::*;
-use sha2::{Digest, Sha256};
 
 pub struct MutationCore;
-
-pub trait RecordHash {
-    fn hash(&self) -> String;
-}
-
-pub fn calculate_member_hash(first_name: &str, last_name: &str, birth_date: &Date, mobile_phone: &str, email: &str) -> String {
-    let normalized = format!(
-        "{}:{}:{}:{}:{}",
-        first_name.trim().to_lowercase(),
-        last_name.trim().to_lowercase(),
-        birth_date.to_string().trim(),
-        mobile_phone.trim().replace(['-', ' ', '(', ')', '+'], ""),
-        email.trim().to_lowercase()
-    );
-
-    // Calculate SHA-256 hash
-    let mut hasher = Sha256::new();
-    hasher.update(normalized);
-    let result = hasher.finalize();
-
-    // Convert to hex string
-    format!("{:x}", result)
-}
-
-impl RecordHash for member::Model {
-    fn hash(&self) -> String {
-        calculate_member_hash(&self.first_name, &self.last_name, &self.birth_date, &self.mobile_phone, &self.email)
-    }
-}
-
-impl RecordHash for import_row::Model {
-    fn hash(&self) -> String {
-        // Calculate SHA-256 hash
-        let mut hasher = Sha256::new();
-        hasher.update(self.data.to_string());
-        let result = hasher.finalize();
-
-        // Convert to hex string
-        format!("{:x}", result)
-    }
-}
 
 impl MutationCore {
     pub async fn create_episode(
@@ -55,6 +13,7 @@ impl MutationCore {
     ) -> Result<episode::ActiveModel, DbErr> {
         form_data.into_active_model().save(db).await
     }
+    
     pub async fn create_member(
         db: &DbConn,
         form_data: member::Model,
@@ -65,7 +24,7 @@ impl MutationCore {
             email: Set(form_data.email.to_owned()),
             mobile_phone: Set(form_data.mobile_phone.to_owned()),
             birth_date: Set(form_data.birth_date.to_owned()),
-            hash: Set(form_data.hash.to_owned()),
+            hash: Set(form_data.hash()),
             ..Default::default()
         }
         .save(db)
@@ -90,7 +49,7 @@ impl MutationCore {
             email: Set(form_data.email.to_owned()),
             mobile_phone: Set(form_data.mobile_phone.to_owned()),
             birth_date: Set(form_data.birth_date.to_owned()),
-            hash: Default::default(),
+            hash: Set(form_data.hash()),
         }
         .update(db)
         .await
