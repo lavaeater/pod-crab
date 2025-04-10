@@ -5,6 +5,7 @@ use sha2::{Digest, Sha256};
 
 pub mod prelude;
 
+mod bank_transaction;
 pub mod episode;
 pub mod import;
 pub mod import_row;
@@ -12,12 +13,17 @@ pub mod member;
 pub mod post;
 pub mod user;
 
-
 pub trait RecordHash {
     fn hash(&self) -> String;
 }
 
-pub fn calculate_member_hash(first_name: &str, last_name: &str, birth_date: &Date, mobile_phone: &str, email: &str) -> String {
+pub fn calculate_member_hash(
+    first_name: &str,
+    last_name: &str,
+    birth_date: &Date,
+    mobile_phone: &str,
+    email: &str,
+) -> String {
     let normalized = format!(
         "{}:{}:{}:{}:{}",
         first_name.trim().to_lowercase(),
@@ -38,7 +44,13 @@ pub fn calculate_member_hash(first_name: &str, last_name: &str, birth_date: &Dat
 
 impl RecordHash for member::Model {
     fn hash(&self) -> String {
-        calculate_member_hash(&self.first_name, &self.last_name, &self.birth_date, &self.mobile_phone, &self.email)
+        calculate_member_hash(
+            &self.first_name,
+            &self.last_name,
+            &self.birth_date,
+            &self.mobile_phone,
+            &self.email,
+        )
     }
 }
 
