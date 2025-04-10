@@ -33,10 +33,15 @@ impl MutationCore {
 
     pub async fn create_bank_transaction(
         db: &DbConn,
-        form_data: bank_transaction::Model,
+        transaction_data: bank_transaction::Model,
     ) -> Result<bank_transaction::ActiveModel, DbErr> {
         bank_transaction::ActiveModel {
-            hash: Set(form_data.hash()),
+            bookkeeping_date: Set(transaction_data.bookkeeping_date.to_owned()),
+            transaction_text: Set(transaction_data.transaction_text.to_owned()),
+            reference: Set(transaction_data.reference.to_owned()),
+            other_fields: Set(transaction_data.other_fields.to_owned()),
+            amount: Set(transaction_data.amount.to_owned()),
+            hash: Set(transaction_data.hash()),
             ..Default::default()
         }
         .save(db)

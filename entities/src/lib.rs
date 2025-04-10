@@ -70,7 +70,7 @@ impl RecordHash for bank_transaction::Model {
     fn hash(&self) -> String {
         // Calculate SHA-256 hash
         let mut hasher = Sha256::new();
-        hasher.update(self.data.to_string());
+        hasher.update(&self.other_fields);
         let result = hasher.finalize();
 
         // Convert to hex string
