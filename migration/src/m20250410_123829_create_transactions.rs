@@ -15,8 +15,9 @@ impl MigrationTrait for Migration {
                     .col(date(BankTransaction::BookkeepingDate))
                     .col(string(BankTransaction::TransactionText))
                     .col(string(BankTransaction::Reference))
-                    .col(string(BankTransaction::Hash))
+                    .col(string(BankTransaction::OtherFields))
                     .col(money(BankTransaction::Amount))
+                    .col(string(BankTransaction::Hash))
                     .to_owned(),
             )
             .await
@@ -36,6 +37,7 @@ enum BankTransaction {
     BookkeepingDate,
     TransactionText,
     Reference,
-    Hash,
+    OtherFields,
     Amount,
+    Hash,
 }

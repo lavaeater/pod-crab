@@ -1,4 +1,4 @@
-use entities::{episode, member, member::Entity as Member, RecordHash};
+use entities::{bank_transaction, episode, member, member::Entity as Member, RecordHash};
 use entities::{post, post::Entity as Post};
 
 use sea_orm::prelude::Uuid;
@@ -13,7 +13,7 @@ impl MutationCore {
     ) -> Result<episode::ActiveModel, DbErr> {
         form_data.into_active_model().save(db).await
     }
-    
+
     pub async fn create_member(
         db: &DbConn,
         form_data: member::Model,
@@ -24,6 +24,18 @@ impl MutationCore {
             email: Set(form_data.email.to_owned()),
             mobile_phone: Set(form_data.mobile_phone.to_owned()),
             birth_date: Set(form_data.birth_date.to_owned()),
+            hash: Set(form_data.hash()),
+            ..Default::default()
+        }
+        .save(db)
+        .await
+    }
+
+    pub async fn create_bank_transaction(
+        db: &DbConn,
+        form_data: bank_transaction::Model,
+    ) -> Result<bank_transaction::ActiveModel, DbErr> {
+        bank_transaction::ActiveModel {
             hash: Set(form_data.hash()),
             ..Default::default()
         }

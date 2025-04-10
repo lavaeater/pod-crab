@@ -17,11 +17,12 @@ pub struct Model {
     pub mobile_phone: String,
     pub birth_date: Date,
     #[serde(skip_deserializing)]
-    pub hash: String
+    pub hash: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
+
 #[async_trait]
 impl ActiveModelBehavior for ActiveModel {
     async fn before_save<C>(mut self, _db: &C, insert: bool) -> Result<Self, DbErr>
