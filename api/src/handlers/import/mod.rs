@@ -7,7 +7,6 @@ use poem::http::StatusCode;
 use poem::web::{Data, Html, Multipart, Query};
 use poem::{get, handler, post, EndpointExt, IntoResponse, Route};
 use sea_orm::prelude::Uuid;
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use service::{MutationCore, QueryCore};
 use std::default::Default;
 use std::str::FromStr;
@@ -100,7 +99,7 @@ pub async fn upload(
                         );
 
                         // Check if member with similar data already exists
-                        if member_exists_by_hash(conn, &record_hash).await {
+                        if QueryCore::member_exists_by_hash(conn, &record_hash).await {
                             _skipped += 1;
                             continue;
                         }
@@ -151,7 +150,7 @@ pub async fn upload(
                         );
 
                         // Check if member with similar data already exists
-                        if member_exists_by_hash(conn, &record_hash).await {
+                        if QueryCore::member_exists_by_hash(conn, &record_hash).await {
                             _skipped += 1;
                             continue;
                         }
@@ -180,51 +179,6 @@ pub async fn upload(
         }
         _ => Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/import")),
     }
-}
-
-/// Check if a member with similar data already exists in the database
-async fn member_exists_by_hash(conn: &sea_orm::DatabaseConnection, hash: &str) -> bool {
-    // Check for existing members with the same email (primary check)
-    let hash_match = member::Entity::find()
-        .filter(member::Column::Hash.eq(hash.to_string()))
-        .one(conn)
-        .await;
-
-    match hash_match {
-        Ok(m) => match m {
-            Some(_) => true,
-            None => false,
-        },
-        Err(_) => false,
-    }
-}
-
-/// Check if a member with similar data already exists in the database
-#[allow(dead_code)]
-async fn member_exists_by_data(
-    conn: &sea_orm::DatabaseConnection,
-    first_name: &str,
-    last_name: &str,
-    email: &str,
-) -> bool {
-    // Check for existing members with the same email (primary check)
-    let email_match = member::Entity::find()
-        .filter(member::Column::Email.eq(email.to_string()))
-        .one(conn)
-        .await;
-
-    if let Ok(Some(_)) = email_match {
-        return true;
-    }
-
-    // Check for members with the same first and last name as a secondary check
-    let name_match = member::Entity::find()
-        .filter(member::Column::FirstName.eq(first_name.to_string()))
-        .filter(member::Column::LastName.eq(last_name.to_string()))
-        .one(conn)
-        .await;
-
-    matches!(name_match, Ok(Some(_)))
 }
 
 pub fn import_routes() -> Route {
