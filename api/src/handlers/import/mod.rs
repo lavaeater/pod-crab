@@ -6,7 +6,7 @@ use poem::error::InternalServerError;
 use poem::http::StatusCode;
 use poem::web::{Data, Html, Multipart, Query};
 use poem::{get, handler, post, EndpointExt, IntoResponse, Route};
-use sea_orm::prelude::Uuid;
+use sea_orm::prelude::{Decimal, Uuid};
 use service::{MutationCore, QueryCore};
 use std::default::Default;
 use std::str::FromStr;
@@ -140,7 +140,7 @@ pub async fn upload(
                         let account_total = record.get(6).unwrap();
                         let reference = record.get(7).unwrap();
                         let other_fields = format!(
-                            "{}|{}|{}|{}|{}|{}|{}|{}",
+                            "{}|{}|{}|{}|{}|{}|{}",
                             bookkeeping_date,
                             transaction_date,
                             currency_date,
@@ -165,8 +165,10 @@ pub async fn upload(
                         let bank_transaction_model = bank_transaction::Model {
                             id: Uuid::default(),
                             bookkeeping_date,
-                            transaction_text: transaction_text.to_string(), 
+                            transaction_text: transaction_text.to_string(),
                             reference: reference.to_string(),
+                            amount: Decimal::from_str_exact(amount).unwrap(),
+                            other_fields: other_fields.to_string(),
                             hash: String::default(),
                         };
 

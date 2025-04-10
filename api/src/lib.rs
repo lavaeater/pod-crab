@@ -1,3 +1,5 @@
+extern crate core;
+
 use crate::handlers::auth::setup_openid_client;
 use crate::handlers::{auth, import, index, members, posts};
 use entities::user;
