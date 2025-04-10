@@ -160,6 +160,15 @@ pub async fn upload(
                             _skipped += 1;
                             continue;
                         }
+                        let mut amount = amount
+                            .replace('−', "-") // U+2212 MINUS SIGN
+                            .replace('–', "-") // EN DASH
+                            .replace('—', "-") // EM DASH
+                            .replace(',', ".") // Replace comma with dot
+                            .split_whitespace()
+                            .collect::<String>()
+                            .parse::<Decimal>()
+                            .unwrap_or_default();
 
                         // Create the member
                         let bank_transaction_model = bank_transaction::Model {
@@ -167,7 +176,7 @@ pub async fn upload(
                             bookkeeping_date,
                             transaction_text: transaction_text.to_string(),
                             reference: reference.to_string(),
-                            amount: Decimal::from_str_exact(amount).unwrap(),
+                            amount,
                             other_fields: other_fields.to_string(),
                             hash: String::default(),
                         };

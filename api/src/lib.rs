@@ -1,3 +1,4 @@
+#![feature(string_remove_matches)]
 extern crate core;
 
 use crate::handlers::auth::setup_openid_client;
