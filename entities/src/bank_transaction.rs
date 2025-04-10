@@ -5,10 +5,13 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "bank_transaction")]
 pub struct Model {
-    #[sea_orm(primary_key)]
-    pub id: i32,
-    pub title: String,
-    pub text: String,
+    #[sea_orm(primary_key, auto_increment = false)]
+    pub id: Uuid,
+    pub bookkeeping_date: Date,
+    pub transaction_text: String,
+    pub reference: String,
+    pub hash: String,
+    pub amount: Decimal,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

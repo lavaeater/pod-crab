@@ -5,7 +5,7 @@ use sha2::{Digest, Sha256};
 
 pub mod prelude;
 
-mod bank_transaction;
+pub mod bank_transaction;
 pub mod episode;
 pub mod import;
 pub mod import_row;

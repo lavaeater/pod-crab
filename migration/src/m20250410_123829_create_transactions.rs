@@ -11,7 +11,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(BankTransaction::Table)
                     .if_not_exists()
-                    .col(pk_auto(BankTransaction::Id))
+                    .col(pk_uuid(BankTransaction::Id))
                     .col(date(BankTransaction::BookkeepingDate))
                     .col(string(BankTransaction::TransactionText))
                     .col(string(BankTransaction::Reference))
