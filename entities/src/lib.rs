@@ -69,11 +69,15 @@ impl RecordHash for import_row::Model {
 impl RecordHash for bank_transaction::Model {
     fn hash(&self) -> String {
         // Calculate SHA-256 hash
-        let mut hasher = Sha256::new();
-        hasher.update(&self.other_fields);
-        let result = hasher.finalize();
-
-        // Convert to hex string
-        format!("{:x}", result)
+        calculate_bank_transaction_hash(&self.other_fields)
     }
+}
+
+pub fn calculate_bank_transaction_hash(other_fields: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(other_fields);
+    let result = hasher.finalize();
+
+    // Convert to hex string
+    format!("{:x}", result)
 }

@@ -1,7 +1,7 @@
 use crate::handlers::auth::login_required_middleware::login_required_middleware;
 use crate::handlers::auth::required_role_middleware::RequiredRoleMiddleware;
 use crate::{AppState, PaginationParams};
-use entities::{calculate_member_hash, member};
+use entities::{bank_transaction, calculate_bank_transaction_hash, calculate_member_hash, member};
 use poem::error::InternalServerError;
 use poem::http::StatusCode;
 use poem::web::{Data, Html, Multipart, Query};
@@ -132,41 +132,48 @@ pub async fn upload(
 
                     for r in csv_reader.records() {
                         let record = r.map_err(InternalServerError)?;
-                        let first_name = record.get(0).unwrap();
-                        let last_name = record.get(1).unwrap();
-                        let birthdate = record.get(2).unwrap();
-                        let phone_number = record.get(3).unwrap();
-                        let email = record.get(4).unwrap();
-
-                        // Calculate hash for the record
-                        let birth_date = sea_orm::prelude::Date::from_str(birthdate)
-                            .unwrap_or_else(|_| (sea_orm::prelude::Date::MIN));
-                        let record_hash = calculate_member_hash(
-                            first_name,
-                            last_name,
-                            &birth_date,
-                            phone_number,
-                            email,
+                        let bookkeeping_date = record.get(1).unwrap();
+                        let transaction_date = record.get(2).unwrap();
+                        let currency_date = record.get(3).unwrap();
+                        let transaction_text = record.get(4).unwrap();
+                        let amount = record.get(5).unwrap();
+                        let account_total = record.get(6).unwrap();
+                        let reference = record.get(7).unwrap();
+                        let other_fields = format!(
+                            "{}|{}|{}|{}|{}|{}|{}|{}",
+                            bookkeeping_date,
+                            transaction_date,
+                            currency_date,
+                            transaction_text,
+                            amount,
+                            account_total,
+                            reference,
                         );
 
+                        // Calculate hash for the record
+                        let bookkeeping_date = sea_orm::prelude::Date::from_str(bookkeeping_date)
+                            .unwrap_or_else(|_| (sea_orm::prelude::Date::MIN));
+                        let record_hash = calculate_bank_transaction_hash(&other_fields);
+
                         // Check if member with similar data already exists
-                        if QueryCore::member_exists_by_hash(conn, &record_hash).await {
+                        if QueryCore::bank_transaction_exists_by_hash(conn, &record_hash).await {
                             _skipped += 1;
                             continue;
                         }
 
                         // Create the member
-                        let member_model = member::Model {
+                        let bank_transaction_model = bank_transaction::Model {
                             id: Uuid::default(),
-                            first_name: first_name.to_string(),
-                            last_name: last_name.to_string(),
-                            birth_date,
-                            mobile_phone: phone_number.to_string(),
-                            email: email.to_string(),
+                            bookkeeping_date,
+                            transaction_text: transaction_text.to_string(), 
+                            reference: reference.to_string(),
                             hash: String::default(),
                         };
 
-                        if let Err(e) = MutationCore::create_member(conn, member_model).await {
+                        if let Err(e) =
+                            MutationCore::create_bank_transaction(conn, bank_transaction_model)
+                                .await
+                        {
                             // Handle error (log it, but continue processing other records)
                             log::error!("Failed to create member: {}", e);
                         } else {
