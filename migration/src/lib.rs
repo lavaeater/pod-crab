@@ -20,7 +20,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250108_130829_add_episode_and_user_table::Migration),
             Box::new(m20250405_063228_create_import::Migration),
             Box::new(m20250410_123829_create_transactions::Migration),
-            Box::new(m20250410_195329_create_member_events::Migration),
+            // Box::new(m20250410_195329_create_member_events::Migration),
         ]
     }
 }
