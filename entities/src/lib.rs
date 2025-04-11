@@ -17,20 +17,12 @@ pub trait RecordHash {
     fn hash(&self) -> String;
 }
 
-pub fn calculate_member_hash(
-    first_name: &str,
-    last_name: &str,
-    birth_date: &Date,
-    mobile_phone: &str,
-    email: &str,
-) -> String {
+pub fn calculate_member_hash(first_name: &str, last_name: &str, birth_date: &Date) -> String {
     let normalized = format!(
-        "{}:{}:{}:{}:{}",
+        "{}:{}:{}",
         first_name.trim().to_lowercase(),
         last_name.trim().to_lowercase(),
-        birth_date.to_string().trim(),
-        mobile_phone.trim().replace(['-', ' ', '(', ')', '+'], ""),
-        email.trim().to_lowercase()
+        birth_date.to_string().trim()
     );
 
     // Calculate SHA-256 hash
