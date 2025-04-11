@@ -15,9 +15,9 @@ impl MigrationTrait for Migration {
                     .col(pk_uuid(Member::Id))
                     .col(string(Member::FirstName))
                     .col(string(Member::LastName))
-                    .col(string(Member::Email))
-                    .col(string(Member::MobilePhone))
-                    .col(date(Member::BirthDate))
+                    .col(string_null(Member::Email))
+                    .col(string_null(Member::MobilePhone))
+                    .col(date_null(Member::BirthDate))
                     .col(string(Member::Hash))
                     .to_owned(),
             )

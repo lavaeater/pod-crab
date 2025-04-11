@@ -13,9 +13,9 @@ pub struct Model {
     pub id: Uuid,
     pub first_name: String,
     pub last_name: String,
-    pub email: String,
-    pub mobile_phone: String,
-    pub birth_date: Date,
+    pub email: Option<String>,
+    pub mobile_phone: Option<String>,
+    pub birth_date: Option<Date>,
     #[serde(skip_deserializing)]
     pub hash: String,
 }

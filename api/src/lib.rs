@@ -19,7 +19,7 @@ use tera::Tera;
 
 mod handlers;
 
-const DEFAULT_ITEMS_PER_PAGE: u64 = 5;
+const DEFAULT_ITEMS_PER_PAGE: u64 = 100;
 
 #[derive(Debug, Clone)]
 struct AppState {
