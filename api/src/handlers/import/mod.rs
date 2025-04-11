@@ -84,19 +84,24 @@ pub async fn upload(
                         let first_name = record.get(0).unwrap();
                         let last_name = record.get(1).unwrap();
                         let birthdate = record.get(2).unwrap();
-                        let phone_number = record.get(3).unwrap();
+                        let mobile_phone = record.get(3).unwrap();
                         let email = record.get(4).unwrap();
 
                         // Calculate hash for the record
-                        let birth_date = sea_orm::prelude::Date::from_str(birthdate)
-                            .unwrap_or_else(|_| (sea_orm::prelude::Date::MIN));
-                        let record_hash = calculate_member_hash(
-                            first_name,
-                            last_name,
-                            &birth_date,
-                            phone_number,
-                            email,
-                        );
+                        let birth_date = sea_orm::prelude::Date::from_str(birthdate);
+
+                        let birth_date_string = match birth_date {
+                            Ok(date) => date.to_string(),
+                            Err(_) => "".to_string(),
+                        };
+
+                        let birth_date = match birth_date {
+                            Ok(date) => Some(date),
+                            Err(_) => None,
+                        };
+
+                        let record_hash =
+                            calculate_member_hash(first_name, last_name, &birth_date_string);
 
                         // Check if member with similar data already exists
                         if QueryCore::member_exists_by_hash(conn, &record_hash).await {
@@ -104,14 +109,26 @@ pub async fn upload(
                             continue;
                         }
 
+                        let mobile_phone = if mobile_phone.is_empty() {
+                            None
+                        } else {
+                            Some(mobile_phone.to_string())
+                        };
+
+                        let email = if email.is_empty() {
+                            None
+                        } else {
+                            Some(email.to_string())
+                        };
+
                         // Create the member
                         let member_model = member::Model {
                             id: Uuid::default(),
                             first_name: first_name.to_string(),
                             last_name: last_name.to_string(),
                             birth_date,
-                            mobile_phone: phone_number.to_string(),
-                            email: email.to_string(),
+                            mobile_phone,
+                            email,
                             hash: String::default(),
                         };
 
