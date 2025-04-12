@@ -6,7 +6,7 @@ use sea_orm::Set;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "bank_transaction")]
+#[sea_orm(table_name = "bank_transactions")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     #[serde(skip_deserializing)]

@@ -12,12 +12,12 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Import::Table)
+                    .table(Imports::Table)
                     .if_not_exists()
-                    .col(pk_auto(Import::Id))
-                    .col(string(Import::Title))
-                    .col(string(Import::Text))
-                    .col(binary(Import::Data))
+                    .col(pk_auto(Imports::Id))
+                    .col(string(Imports::Title))
+                    .col(string(Imports::Text))
+                    .col(binary(Imports::Data))
                     .to_owned(),
             )
             .await?;
@@ -26,15 +26,15 @@ impl MigrationTrait for Migration {
             .create_table(
                 foreign_key_auto(
                     Table::create()
-                        .table(ImportRow::Table)
+                        .table(ImportRows::Table)
                         .if_not_exists()
-                        .col(pk_uuid(ImportRow::Id))
-                        .col(string(ImportRow::Data))
-                        .col(string(ImportRow::Hash)),
-                    ImportRow::Table,
-                    ImportRow::ImportId,
-                    Import::Table,
-                    Import::Id,
+                        .col(pk_uuid(ImportRows::Id))
+                        .col(string(ImportRows::Data))
+                        .col(string(ImportRows::Hash)),
+                    ImportRows::Table,
+                    ImportRows::ImportId,
+                    Imports::Table,
+                    Imports::Id,
                     true,
                 )
                 .to_owned(),
@@ -44,13 +44,13 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Import::Table).to_owned())
+            .drop_table(Table::drop().table(Imports::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden, Copy, Clone, Debug, Hash)]
-enum Import {
+enum Imports {
     Table,
     Id,
     Title,
@@ -58,20 +58,20 @@ enum Import {
     Data,
 }
 
-impl Display for Import {
+impl Display for Imports {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Import::Table => write!(f, "import_table"),
-            Import::Id => write!(f, "import_id"),
-            Import::Title => write!(f, "import_title"),
-            Import::Text => write!(f, "import_text"),
-            Import::Data => write!(f, "import_data"),
+            Imports::Table => write!(f, "import_table"),
+            Imports::Id => write!(f, "import_id"),
+            Imports::Title => write!(f, "import_title"),
+            Imports::Text => write!(f, "import_text"),
+            Imports::Data => write!(f, "import_data"),
         }
     }
 }
 
 #[derive(DeriveIden, Copy, Clone, Debug, Hash)]
-enum ImportRow {
+enum ImportRows {
     Table,
     Id,
     ImportId,
@@ -79,14 +79,14 @@ enum ImportRow {
     Hash,
 }
 
-impl Display for ImportRow {
+impl Display for ImportRows {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ImportRow::Table => write!(f, "import_row_table"),
-            ImportRow::Id => write!(f, "import_row_id"),
-            ImportRow::ImportId => write!(f, "import_row_import_id"),
-            ImportRow::Data => write!(f, "import_row_data"),
-            ImportRow::Hash => {
+            ImportRows::Table => write!(f, "import_rows"),
+            ImportRows::Id => write!(f, "import_row_id"),
+            ImportRows::ImportId => write!(f, "import_row_import_id"),
+            ImportRows::Data => write!(f, "import_row_data"),
+            ImportRows::Hash => {
                 write!(f, "import_row_hash")
             }
         }

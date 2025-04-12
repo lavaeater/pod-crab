@@ -12,12 +12,12 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(User::Table)
+                    .table(Users::Table)
                     .if_not_exists()
-                    .col(pk_uuid(User::Id))
-                    .col(string(User::Email))
-                    .col(string(User::Name))
-                    .col(string(User::Role).default("user"))
+                    .col(pk_uuid(Users::Id))
+                    .col(string(Users::Email))
+                    .col(string(Users::Name))
+                    .col(string(Users::Role).default("user"))
                     .to_owned(),
             )
             .await?;
@@ -25,18 +25,18 @@ impl MigrationTrait for Migration {
         manager
             .create_table(foreign_key_auto(
                 &mut Table::create()
-                    .table(Episode::Table)
+                    .table(Episodes::Table)
                     .if_not_exists()
-                    .col(pk_uuid(Episode::Id))
-                    .col(string(Episode::Title))
-                    .col(string(Episode::Summary))
-                    .col(string(Episode::Tags))
-                    .col(string_null(Episode::Url))
+                    .col(pk_uuid(Episodes::Id))
+                    .col(string(Episodes::Title))
+                    .col(string(Episodes::Summary))
+                    .col(string(Episodes::Tags))
+                    .col(string_null(Episodes::Url))
                     .to_owned(),
-                Episode::Table,
-                Episode::UserId,
-                User::Table,
-                User::Id,
+                Episodes::Table,
+                Episodes::UserId,
+                Users::Table,
+                Users::Id,
                 true,
             ))
             .await?;
@@ -45,18 +45,18 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Episode::Table).to_owned())
+            .drop_table(Table::drop().table(Episodes::Table).to_owned())
             .await?;
 
         manager
-            .drop_table(Table::drop().table(User::Table).to_owned())
+            .drop_table(Table::drop().table(Users::Table).to_owned())
             .await?;
         Ok(())
     }
 }
 
 #[derive(DeriveIden, Copy, Clone)]
-enum Episode {
+enum Episodes {
     Table,
     Id,
     UserId,
@@ -65,22 +65,22 @@ enum Episode {
     Tags,
     Url,
 }
-impl Display for Episode {
+impl Display for Episodes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Episode::Table => write!(f, "episode_table"),
-            Episode::Id => write!(f, "episode_id"),
-            Episode::UserId => write!(f, "episode_user_id"),
-            Episode::Title => write!(f, "episode_title"),
-            Episode::Summary => write!(f, "episode_summary"),
-            Episode::Tags => write!(f, "episode_tags"),
-            Episode::Url => write!(f, "episode_url"),
+            Episodes::Table => write!(f, "episodes"),
+            Episodes::Id => write!(f, "episode_id"),
+            Episodes::UserId => write!(f, "episode_user_id"),
+            Episodes::Title => write!(f, "episode_title"),
+            Episodes::Summary => write!(f, "episode_summary"),
+            Episodes::Tags => write!(f, "episode_tags"),
+            Episodes::Url => write!(f, "episode_url"),
         }
     }
 }
 
 #[derive(DeriveIden, Copy, Clone)]
-enum User {
+enum Users {
     Table,
     Id,
     Email,
@@ -88,14 +88,14 @@ enum User {
     Role,
 }
 
-impl Display for User {
+impl Display for Users {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            User::Table => write!(f, "user_table"),
-            User::Id => write!(f, "user_id"),
-            User::Name => write!(f, "user_name"),
-            User::Email => write!(f, "user_email"),
-            User::Role => write!(f, "user_role"),
+            Users::Table => write!(f, "users"),
+            Users::Id => write!(f, "user_id"),
+            Users::Name => write!(f, "user_name"),
+            Users::Email => write!(f, "user_email"),
+            Users::Role => write!(f, "user_role"),
         }
     }
 }

@@ -11,15 +11,15 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Member::Table)
+                    .table(Members::Table)
                     .if_not_exists()
-                    .col(pk_uuid(Member::Id))
-                    .col(string(Member::FirstName))
-                    .col(string(Member::LastName))
-                    .col(string_null(Member::Email))
-                    .col(string_null(Member::MobilePhone))
-                    .col(date_null(Member::BirthDate))
-                    .col(string(Member::Hash))
+                    .col(pk_uuid(Members::Id))
+                    .col(string(Members::FirstName))
+                    .col(string(Members::LastName))
+                    .col(string_null(Members::Email))
+                    .col(string_null(Members::MobilePhone))
+                    .col(date_null(Members::BirthDate))
+                    .col(string(Members::Hash))
                     .to_owned(),
             )
             .await
@@ -28,13 +28,13 @@ impl MigrationTrait for Migration {
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         // Replace the sample below with your own migration scripts
         manager
-            .drop_table(Table::drop().table(Member::Table).to_owned())
+            .drop_table(Table::drop().table(Members::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden, Copy, Clone)]
-pub enum Member {
+pub enum Members {
     Table,
     Id,
     FirstName,
@@ -45,17 +45,17 @@ pub enum Member {
     Hash,
 }
 
-impl Display for Member {
+impl Display for Members {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Member::Table => write!(f, "member_table"),
-            Member::Id => write!(f, "member_id"),
-            Member::FirstName => write!(f, "member_first_name"),
-            Member::LastName => write!(f, "member_last_name"),
-            Member::Email => write!(f, "member_email"),
-            Member::MobilePhone => write!(f, "member_mobile_phone"),
-            Member::BirthDate => write!(f, "member_birth_date"),
-            Member::Hash => write!(f, "member_hash"),
+            Members::Table => write!(f, "members"),
+            Members::Id => write!(f, "member_id"),
+            Members::FirstName => write!(f, "member_first_name"),
+            Members::LastName => write!(f, "member_last_name"),
+            Members::Email => write!(f, "member_email"),
+            Members::MobilePhone => write!(f, "member_mobile_phone"),
+            Members::BirthDate => write!(f, "member_birth_date"),
+            Members::Hash => write!(f, "member_hash"),
         }
     }
 }

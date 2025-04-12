@@ -9,15 +9,15 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(BankTransaction::Table)
+                    .table(BankTransactions::Table)
                     .if_not_exists()
-                    .col(pk_uuid(BankTransaction::Id))
-                    .col(date(BankTransaction::BookkeepingDate))
-                    .col(string(BankTransaction::TransactionText))
-                    .col(string(BankTransaction::Reference))
-                    .col(string(BankTransaction::OtherFields))
-                    .col(money(BankTransaction::Amount))
-                    .col(string(BankTransaction::Hash))
+                    .col(pk_uuid(BankTransactions::Id))
+                    .col(date(BankTransactions::BookkeepingDate))
+                    .col(string(BankTransactions::TransactionText))
+                    .col(string(BankTransactions::Reference))
+                    .col(string(BankTransactions::OtherFields))
+                    .col(money(BankTransactions::Amount))
+                    .col(string(BankTransactions::Hash))
                     .to_owned(),
             )
             .await
@@ -25,13 +25,13 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(BankTransaction::Table).to_owned())
+            .drop_table(Table::drop().table(BankTransactions::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-enum BankTransaction {
+enum BankTransactions {
     Table,
     Id,
     BookkeepingDate,
