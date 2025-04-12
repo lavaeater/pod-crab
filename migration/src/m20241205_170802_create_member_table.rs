@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use sea_orm_migration::{prelude::*, schema::*};
 
 #[derive(DeriveMigrationName)]
@@ -32,8 +33,8 @@ impl MigrationTrait for Migration {
     }
 }
 
-#[derive(DeriveIden)]
-enum Member {
+#[derive(DeriveIden, Copy, Clone)]
+pub enum Member {
     Table,
     Id,
     FirstName,
@@ -42,4 +43,19 @@ enum Member {
     MobilePhone,
     BirthDate,
     Hash,
+}
+
+impl Display for Member {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Member::Table => write!(f, "member_table"),
+            Member::Id => write!(f, "member_id"),
+            Member::FirstName => write!(f, "member_first_name"),
+            Member::LastName => write!(f, "member_last_name"),
+            Member::Email => write!(f, "member_email"),
+            Member::MobilePhone => write!(f, "member_mobile_phone"),
+            Member::BirthDate => write!(f, "member_birth_date"),
+            Member::Hash => write!(f, "member_hash"),
+        }
+    }
 }
