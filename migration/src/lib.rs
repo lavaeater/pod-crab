@@ -8,6 +8,7 @@ mod m20250108_130829_add_episode_and_user_table;
 mod m20250405_063228_create_import;
 mod m20250410_123829_create_transactions;
 mod m20250410_195329_create_member_events;
+mod m20250608_123514_add_message_to_transactions;
 
 pub struct Migrator;
 
@@ -21,6 +22,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250405_063228_create_import::Migration),
             Box::new(m20250410_123829_create_transactions::Migration),
             Box::new(m20250410_195329_create_member_events::Migration),
+            Box::new(m20250608_123514_add_message_to_transactions::Migration),
         ]
     }
 }
