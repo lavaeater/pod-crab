@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::handlers::auth::login_required_middleware::login_required_middleware;
 use crate::handlers::auth::required_role_middleware::RequiredRoleMiddleware;
 use crate::{AppState, PaginationParams};
@@ -146,16 +147,28 @@ pub async fn upload(
                     let conn = &state.conn;
                     let mut _imported = 0;
                     let mut _skipped = 0;
-
+                    
+                    /*
+                    Motsvarar kolumnerna i CSV filen direkt från Swedbank
+                     */
+                    let csv_mapping: HashMap<&str, usize> = HashMap::from([
+                        ("bookkeeping_date", 5),
+                        ("transaction_date", 6),
+                        ("currency_date", 7),
+                        ("transaction_text", 9),
+                        ("amount",10),
+                        ("account_total", 11),
+                        ("reference",8),
+                    ]);
                     for r in csv_reader.records() {
                         let record = r.map_err(InternalServerError)?;
-                        let bookkeeping_date = record.get(1).unwrap();
-                        let transaction_date = record.get(2).unwrap();
-                        let currency_date = record.get(3).unwrap();
-                        let transaction_text = record.get(4).unwrap();
-                        let amount = record.get(5).unwrap();
-                        let account_total = record.get(6).unwrap();
-                        let reference = record.get(7).unwrap();
+                        let bookkeeping_date = record.get(*csv_mapping.get("bookkeeping_date").unwrap()).unwrap();
+                        let transaction_date = record.get(*csv_mapping.get("transaction_date").unwrap()).unwrap();
+                        let currency_date = record.get(*csv_mapping.get("currency_date").unwrap()).unwrap();
+                        let transaction_text = record.get(*csv_mapping.get("transaction_text").unwrap()).unwrap();
+                        let amount = record.get(*csv_mapping.get("amount").unwrap()).unwrap();
+                        let account_total = record.get(*csv_mapping.get("account_total").unwrap()).unwrap();
+                        let reference = record.get(*csv_mapping.get("reference").unwrap()).unwrap();
                         let other_fields = format!(
                             "{}|{}|{}|{}|{}|{}|{}",
                             bookkeeping_date,
