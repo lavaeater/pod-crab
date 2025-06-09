@@ -1,5 +1,5 @@
-mod mutation;
-mod query;
+mod mutation_core;
+mod query_core;
 
-pub use mutation::*;
-pub use query::*;
+pub use mutation_core::*;
+pub use query_core::*;

@@ -11,6 +11,7 @@
     <table class="table table-zebra w-full">
       <thead>
       <tr>
+        <th></th>
         <th>Firstname</th>
         <th>Surname</th>
         <th>Email</th>
@@ -20,7 +21,7 @@
       </thead>
       <tbody id="post-list">
       {% for member in members %}
-        {% include "member_row.html.tera" %}
+        {% include "members/member_row.html.tera" %}
       {% endfor %}
       </tbody>
       <tfoot>

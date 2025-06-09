@@ -81,8 +81,8 @@ background = false
 on_change_strategy = "kill_then_restart"
 
 [jobs.frontend]
-command=["npm", "--prefix", "frontend/", "run", "build:dev"]
-watch = ["frontend"]
+command = ["npm", "--prefix", "frontend/", "run", "build:dev"]
+watch = ["frontend", "templates"]
 need_stdout = true
 allow_warnings = true
 background = false
@@ -103,3 +103,5 @@ allow_warnings = true
 [keybindings]
 # alt-m = "job:my-job"
 c = "job:clippy-all" # comment this to have 'c' run clippy on only the default target
+f = "job:frontend"
+r = "job:run-long"

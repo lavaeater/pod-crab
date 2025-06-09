@@ -7,15 +7,14 @@ use poem::http::StatusCode;
 use poem::web::{Data, Form, Html, Path, Query};
 use poem::{get, handler, post, EndpointExt, Error, IntoResponse, Route};
 use sea_orm::prelude::Uuid;
-use service::{Mutation as MutationCore, Query as QueryCore};
+use service::{MutationCore as MutationCore, QueryCore as QueryCore};
 
 #[handler]
 pub async fn create(state: Data<&AppState>, form: Form<Member>) -> poem::Result<impl IntoResponse> {
-    let form = form.0;
+    let mut form = form.0;
     let conn = &state.conn;
-
-    MutationCore::create_member(conn, form)
-        .await
+    
+    MutationCore::create_member(conn, form).await
         .map_err(InternalServerError)?;
 
     Ok(StatusCode::ACCEPTED.with_header("HX-Redirect", "/members"))
@@ -53,7 +52,6 @@ pub async fn new(state: Data<&AppState>) -> poem::Result<impl IntoResponse> {
     match state.templates.render("members/new.html.tera", &ctx) {
         Ok(rendered) => Ok(Html(rendered)),
         Err(err) => {
-            eprintln!("Tera rendering error: {:?}", err); // Log the error
             Err(InternalServerError(err))
         }
     }
